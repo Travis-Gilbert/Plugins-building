@@ -1,9 +1,15 @@
 ---
 name: theorize
-description: The Harness exploration capability. Use when the task is fuzzy, multiple real approaches exist, or a short option pass will save churn. Reachable as /harness mode=theorize or, for users who explicitly want exploration, the /theorize compatibility command.
+description: Superseded compatibility copy. The canonical Theorize capability is the v0.4 skill in Travis-Gilbert/Theorems-Harness; do not evolve this marketplace copy independently.
 ---
 
 # Theorize
+
+> **Superseded:** This marketplace copy is retained for compatibility and
+> historical installs. The canonical source is
+> `Travis-Gilbert/Theorems-Harness/skills/theorize/SKILL.md` at v0.4 (source
+> commit `49ae273d2292512bc7cc456e96e756aa0fdd9cf6`). New behavior and fixes land
+> there; this file must not diverge silently.
 
 Theorize is the Harness capability for turning fuzzy intent into a
 production-shaped problem model before the wrong implementation begins. It is

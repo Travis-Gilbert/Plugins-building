@@ -3,7 +3,7 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "startup|resume|clear",
+        "matcher": "startup|resume|clear|compact|fork",
         "hooks": [
           {
             "type": "command",
@@ -28,6 +28,12 @@
             "command": "/bin/bash \"${PLUGIN_ROOT}/scripts/sessionstart-codebase.sh\"",
             "timeout": 15,
             "statusMessage": "Loading codebase context"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash \"${PLUGIN_ROOT}/scripts/lint-sessionstart.sh\"",
+            "timeout": 55,
+            "statusMessage": "Capturing RustyRed lint baseline"
           },
           {
             "type": "command",
@@ -144,6 +150,17 @@
             "statusMessage": "Queueing code-delta paths"
           }
         ]
+      },
+      {
+        "matcher": "apply_patch|functions.apply_patch|Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash \"${PLUGIN_ROOT}/scripts/lint-posttool.sh\"",
+            "timeout": 35,
+            "statusMessage": "Linting touched files"
+          }
+        ]
       }
     ],
     "Stop": [
@@ -154,6 +171,12 @@
             "command": "/bin/bash \"${PLUGIN_ROOT}/scripts/hook-doctor.sh\" Stop",
             "timeout": 5,
             "statusMessage": "Recording hook receipt"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash \"${PLUGIN_ROOT}/scripts/lint-stop-gate.sh\"",
+            "timeout": 50,
+            "statusMessage": "Checking introduced lint diagnostics"
           },
           {
             "type": "command",

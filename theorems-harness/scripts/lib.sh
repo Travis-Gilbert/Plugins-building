@@ -480,6 +480,53 @@ theorem_native_json() {
   ' 2>/dev/null
 }
 
+# Invoke the local lint capability through the admitted dynamic gateway.
+#
+# Lint reads paths from the agent's host filesystem, so it must never fall back
+# to the remote Railway MCP endpoint used by generic Harness calls. The local
+# node remains configurable for installations that bind it to another port.
+theorem_lint_call() {
+  local operation="$1"
+  local args="${2-}"
+  local actor="${3:-$(theorem_host)}"
+  local url="${THEOREM_LINT_MCP_URL:-http://127.0.0.1:8380/mcp}"
+  [ -n "$args" ] || args='{}'
+  local gateway_args
+  gateway_args=$(jq -n \
+    --arg affordance_id "lint.$operation" \
+    --arg actor "$actor" \
+    --argjson args "$args" \
+    '{
+      affordance_id: $affordance_id,
+      task_type: "agent-lint",
+      actor: $actor,
+      arguments: $args
+    }') || return 1
+  THEOREM_HARNESS_MCP_URL="$url" theorem_native_call "invoke" "$gateway_args"
+}
+
+theorem_lint_json() {
+  local operation="$1"
+  local args="${2-}"
+  local actor="${3:-$(theorem_host)}"
+  local response
+  response=$(theorem_lint_call "$operation" "$args" "$actor") || return 1
+  if ! printf '%s' "$response" | jq -e '
+    type == "object" and
+    (.error | not) and
+    (.result.isError? != true)
+  ' >/dev/null 2>&1; then
+    return 1
+  fi
+  printf '%s' "$response" | jq -ce '
+    if .error then empty
+    elif (.result.structuredContent? // null) != null then .result.structuredContent
+    elif (.result.content[0].text? // null) != null then (.result.content[0].text | try fromjson catch .)
+    else .result
+    end
+  ' 2>/dev/null
+}
+
 theorem_append_transition() {
   local run_id="$1"
   local event_type="$2"

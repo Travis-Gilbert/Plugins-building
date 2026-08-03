@@ -9,6 +9,7 @@ set -o pipefail
 # Configuration with sensible defaults. Override via env or .theoremrc.
 : "${THEOREM_API_KEY:=}"
 : "${THEOREM_HARNESS_API_TOKEN:=}"
+: "${THEOREM_LINT_API_TOKEN:=}"
 : "${THEOREM_BUDGET_TOKENS:=4000}"
 : "${THEOREM_ACTION_RAIL:=record}"   # one of: record, enforce, off
 : "${THEOREM_DEBUG:=0}"
@@ -162,6 +163,58 @@ theorem_git_branch() {
 theorem_git_head() {
   local repo_root="$1"
   git -C "$repo_root" rev-parse HEAD 2>/dev/null || printf ''
+}
+
+theorem_git_empty_tree() {
+  local repo_root="$1"
+  git -C "$repo_root" hash-object -t tree /dev/null 2>/dev/null || printf ''
+}
+
+theorem_git_dirty_paths() {
+  local repo_root="$1"
+  {
+    git -C "$repo_root" diff --name-only --no-renames -z
+    git -C "$repo_root" diff --cached --name-only --no-renames -z
+    git -C "$repo_root" ls-files --others --exclude-standard -z
+  } 2>/dev/null \
+    | tr '\0' '\n' \
+    | awk 'NF && $0 !~ /^\.theorem(\/|$)/' \
+    | sort -u
+}
+
+theorem_file_fingerprint() {
+  local repo_root="$1"
+  local relative_path="$2"
+  local candidate="$repo_root/$relative_path"
+
+  if [ -L "$candidate" ]; then
+    printf 'symlink:'
+    readlink "$candidate" 2>/dev/null | shasum -a 256 | awk '{print $1}'
+  elif [ -f "$candidate" ]; then
+    printf 'file:'
+    shasum -a 256 "$candidate" 2>/dev/null | awk '{print $1}'
+  elif [ -d "$candidate" ]; then
+    printf 'directory'
+  else
+    printf 'missing'
+  fi
+}
+
+theorem_git_dirty_snapshot_json() {
+  local repo_root="$1"
+  local snapshot='[]'
+  local path fingerprint
+
+  while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    fingerprint=$(theorem_file_fingerprint "$repo_root" "$path")
+    snapshot=$(printf '%s' "$snapshot" | jq -c \
+      --arg path "$path" \
+      --arg fingerprint "$fingerprint" \
+      '. + [{path: $path, fingerprint: $fingerprint}]') || return 1
+  done < <(theorem_git_dirty_paths "$repo_root")
+
+  printf '%s' "$snapshot"
 }
 
 theorem_changed_files_json() {
@@ -464,6 +517,67 @@ theorem_native_json() {
   local args="${2-}"
   local response
   response=$(theorem_native_call "$tool" "$args") || return 1
+  if ! printf '%s' "$response" | jq -e '
+    type == "object" and
+    (.error | not) and
+    (.result.isError? != true)
+  ' >/dev/null 2>&1; then
+    return 1
+  fi
+  printf '%s' "$response" | jq -ce '
+    if .error then empty
+    elif (.result.structuredContent? // null) != null then .result.structuredContent
+    elif (.result.content[0].text? // null) != null then (.result.content[0].text | try fromjson catch .)
+    else .result
+    end
+  ' 2>/dev/null
+}
+
+# Invoke the local lint capability through the admitted dynamic gateway.
+#
+# Lint reads paths from the agent's host filesystem, so it must never fall back
+# to the remote Railway MCP endpoint used by generic Harness calls. The local
+# node remains configurable for installations that bind it to another port.
+theorem_lint_call() {
+  local operation="$1"
+  local args="${2-}"
+  local actor="${3:-$(theorem_host)}"
+  local url="${THEOREM_LINT_MCP_URL:-http://127.0.0.1:8380/mcp}"
+  local token="${THEOREM_LINT_API_TOKEN:-}"
+  local timeout="${THEOREM_NATIVE_TIMEOUT_SECONDS:-5}"
+  [ -n "$args" ] || args='{}'
+  case "$timeout" in
+    ''|*[!0-9]*) timeout=5 ;;
+    0) timeout=5 ;;
+  esac
+  local gateway_args
+  gateway_args=$(jq -n \
+    --arg affordance_id "lint.$operation" \
+    --arg actor "$actor" \
+    --argjson args "$args" \
+    '{
+      affordance_id: $affordance_id,
+      task_type: "agent-lint",
+      actor: $actor,
+      arguments: $args
+    }') || return 1
+  local headers=(-H "Content-Type: application/json" -H "Accept: application/json")
+  if [ -n "$token" ]; then
+    headers+=(-H "Authorization: Bearer ${token}")
+  fi
+  local payload
+  payload=$(jq -n --argjson args "$gateway_args" \
+    '{jsonrpc: "2.0", id: 1, method: "tools/call", params: {name: "invoke", arguments: $args}}') \
+    || return 1
+  curl -sS -m "$timeout" "${headers[@]}" -X POST -d "$payload" "$url"
+}
+
+theorem_lint_json() {
+  local operation="$1"
+  local args="${2-}"
+  local actor="${3:-$(theorem_host)}"
+  local response
+  response=$(theorem_lint_call "$operation" "$args" "$actor") || return 1
   if ! printf '%s' "$response" | jq -e '
     type == "object" and
     (.error | not) and

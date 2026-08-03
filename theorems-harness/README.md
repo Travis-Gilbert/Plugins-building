@@ -333,6 +333,8 @@ Claude Code uses `hooks/hooks.json`; Codex uses the explicit `hooks` path in `.c
 | `THEOREM_TENANT_ID` / `THEOREMS_HARNESS_TENANT` / `RUSTYRED_THG_TENANT` / `THEOREM_CONTEXT_TENANT_SLUG` / `THEOREM_TENANT_SLUG` | empty | Tenant slug for native calls and code KG hooks. The production harness tenant is `Travis-Gilbert`. |
 | `THEOREM_HARNESS_MCP_URL` | `https://rustyredcore-theorem-production.up.railway.app/mcp` | Primary native Theorem MCP URL used by hook scripts. |
 | `THEOREM_HARNESS_API_TOKEN` | empty | Optional Bearer token for native Theorem RustyRed MCP writes. |
+| `THEOREM_LINT_MCP_URL` | `http://127.0.0.1:8380/mcp` | Local dynamic-gateway endpoint used for host-filesystem lint checks. It never falls back to the remote Harness URL. |
+| `THEOREM_LINT_API_TOKEN` | empty | Optional Bearer token used only for the local lint endpoint. Production Harness tokens are never forwarded to lint. |
 | `THEOREM_ACTOR` | host actor | Optional actor override for MCP coordination tools. When omitted, the MCP server defaults to `codex` in Codex-hosted plugin runs and `claude-code` otherwise, so mention reads do not fall back to the API-key actor. |
 | `THEOREM_PROSE_CHECK_BIN` / `THEOREM_DESIGN_CHECK_BIN` | empty | Optional explicit checker binary paths for writing and design engineering receipts. When unset, hooks search `PATH`, `~/.cargo/bin`, plugin `bin/`, and repo-local Cargo target paths. |
 | `THEOREMS_HARNESS_THG_API_TOKEN` | empty | Optional Bearer token for RustyRed-THG direct graph mirrors. |

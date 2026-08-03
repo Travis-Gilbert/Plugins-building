@@ -18,13 +18,18 @@ invented GraphQL or dynamic tool.
    `dataLinks`, `dataQuery`, `dataRetrieve`, `dataViews`, `dataView`, or the
    `upsertDataView` mutation. Use `query_data` only for compatibility or
    envelope diagnosis.
-3. For the instant KG, use the `harnessKg*` GraphQL reads or their exact
+3. For immutable source manifests and publication lineage, use GraphQL
+   `dataRegistry` / `dataRegistries` / `publishDataRegistry` or flat
+   `data_registry_get` / `data_registry_list` / `data_registry_publish`.
+   Publication requires admitted write authority; conflicts and unknown
+   obligations remain explicit rather than replacing the first manifest.
+4. For the instant KG, use the `harnessKg*` GraphQL reads or their exact
    `harness_kg_*` flat counterparts: for example, `harnessKgStatus` maps to
    `harness_kg_status`.
-4. Use flat `datawave_ingest`, `resolve_ingest`, `resolve_entities`,
+5. Use flat `datawave_ingest`, `resolve_ingest`, `resolve_entities`,
    `resolve_explain`, and `memory_dedup_report` only when the advertised flat
    tools exist. They have no GraphQL bridge.
-5. For source reconstruction, prefer the seven `reverseEngineer*` mutations;
+6. For source reconstruction, prefer the seven `reverseEngineer*` mutations;
    use the exact `reverse_engineer_*` flat tools for compatibility. Use
    `reconstruct`, `reconstruct_binary`, or `datawave_ingest` only for their
    broader flat-only modes.
@@ -51,6 +56,7 @@ not run the target commands.
 
 `reverseEngineerPort` is a convenient composition, not proof of a finished
 port. An omitted SHA may bind current state and is not immutable source-manifest
-lineage. There is no stable dynamic reconstruction affordance, persistent
-`DataRegistry`, resolve/DATAWAVE GraphQL bridge, or pinned end-to-end parity
-oracle yet.
+lineage. Publish the explicit source manifest first when durable identity is
+required. There is no stable dynamic reconstruction affordance,
+resolve/DATAWAVE GraphQL bridge, real structural-plus-semantic parity executor,
+or pinned end-to-end parity oracle yet.

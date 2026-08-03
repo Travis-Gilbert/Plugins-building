@@ -1,9 +1,29 @@
 # Verified Cognition Composition
 
-Verified cognition is currently a composition discipline over real solver,
-reconstruction, verification, and plan surfaces. There is no monolithic
-`verifiedCognition` tool and no implemented verified-decision, consistency,
-repair, reconstruction, or voice workflow orchestrator.
+Verified cognition has a source-owned, deterministic orchestration protocol
+over real solver, reconstruction, code-intelligence, verification, Graph Lisp,
+Writing Engineering, and Plan receipts. It supports verified decision,
+consistency, reconstruction, repair, and voice workflow kinds without creating
+a second solver or verifier. There is no monolithic `verifiedCognition` tool or
+current MCP/GraphQL projection.
+
+## Implemented protocol boundary
+
+`rustyred-thg-mcp/src/verified_cognition.rs` validates bounded workflow ids,
+claims, anchors, obligations, and receipt steps. It separates caller proposals
+from proof-eligible evidence, requires exact witnesses where the workflow calls
+for one, preserves unresolved obligations, and builds a SHA-256-linked receipt chain.
+Finalization refuses at the first missing or unsupported obligation.
+
+`scripts/check-verified-cognition-contracts.sh` compiles that module directly
+and runs eight successful and adverse fixtures. It also checks that every named
+solver, reconstruction, verification, Graph Lisp, code, and Writing Engineering
+source is a real registered capability rather than an invented workflow tool.
+
+The protocol currently accepts typed receipt metadata supplied by its Rust
+caller. It does not reload authoritative graph receipts, persist its own receipt
+chain, or expose MCP/GraphQL operations. Those boundaries must land before an
+agent-callable workflow can claim substrate-backed orchestration.
 
 ## Available primitives
 
@@ -50,8 +70,9 @@ This is a manual verified-decision or consistency composition, not a callable
 5. Record and explain verification receipts for the executed oracles.
 
 This composition can produce a replayable chain of stage and verification
-receipts. It does not supply the planned workflow orchestrator, automatic
-rewrite packs, conflict-directed repair, or end-to-end parity oracle.
+receipts. The source protocol can validate that chain, but an agent session must
+still assemble it manually. It does not automatically execute rewrite packs,
+conflict-directed repair, or an end-to-end parity oracle.
 
 ### Repair work
 
@@ -81,6 +102,10 @@ semantic-parity workflow names. In particular, voice has no verified-cognition
 surface in the current substrate. Report that gap instead of substituting a
 model-generated answer.
 
-The planned orchestration module, protocol fixtures, adverse-case contract
-checker, conflict witnesses, structural-plus-semantic parity, rewrite packs,
-obligation-led repair, and voice workflow remain HCM-016 implementation work.
+The orchestration module, protocol fixtures, adverse-case contract checker,
+exact-witness requirements, structural-plus-semantic parity obligations,
+rewrite-pack lineage requirements, obligation-led repair rules, and voice
+workflow rules are implemented in the source contract. The protocol preserves
+witnesses supplied by real capabilities; it does not manufacture them.
+MCP/GraphQL projection, authoritative receipt loading, graph persistence, and a
+direct `prose-check` transport remain HCM-016 implementation work.

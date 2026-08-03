@@ -113,11 +113,14 @@ Use these as abilities inside one run, not as competing products:
   `recordClaim` and the real flat lifecycle including `commitment_check` for
   remote coordination; reserve `assert_typed_claim` and the canonical typed
   lifecycle for Rust repository work until it is projected.
-- If Graph Lisp matters, load `graph-lisp`. The only current agent envelope is
-  Rust `rustyred_thg_graph_lisp::execute_capability`; it has no remote
-  projection, and effect requests refuse with `external_executor_required`.
+- If Graph Lisp matters, load `graph-lisp`. Prefer typed `graphLisp*` queries or
+  the exact dynamic `graph-lisp.read/eval/diff/explain` affordances. The Rust
+  kernel remains `execute_capability`; effect requests refuse with
+  `external_executor_required`.
 - If Data, instant KG, DATAWAVE, resolve, or source reconstruction matters,
-  load `data-reconstruction`. Prefer typed GraphQL where it exists; keep
+  load `data-reconstruction`. Use `dataRegistry`, `dataRegistries`, and
+  `publishDataRegistry` for durable source manifests. Prefer typed GraphQL
+  where it exists; keep
   `resolve_ingest`, `resolve_entities`, `resolve_explain`, `datawave_ingest`,
   `reconstruct`, and `reconstruct_binary` flat-only. Preserve source SHAs,
   receipts, unknowns, unresolved obligations, and validation `not_run` state.
@@ -270,11 +273,13 @@ detail layer rather than another global tool catalog:
   Rust-only canonical `assert_typed_claim`, typed commitment, and constitution
   seams.
 - `graph-lisp` plus `references/GRAPH_LISP_CAPABILITY.md` for crate-local
-  `execute_capability`, bounded pure read/eval/diff/explain, deterministic
-  receipts, and the `external_executor_required` effect boundary.
+  `execute_capability`, admitted dynamic and GraphQL bounded pure
+  read/eval/diff/explain, deterministic receipts, and the
+  `external_executor_required` effect boundary.
 - `data-reconstruction` plus
-  `references/DATA_RECONSTRUCTION_CAPABILITY.md` for typed Data and instant-KG,
-  flat-only `datawave_ingest` and `resolve_ingest`, and
+  `references/DATA_RECONSTRUCTION_CAPABILITY.md` for typed Data, persistent
+  DataRegistry lineage, instant-KG, flat-only `datawave_ingest` and
+  `resolve_ingest`, and
   `reverseEngineerCompose` through `reverseEngineerPort` with source and
   obligation discipline.
 - `learning-evolution` plus

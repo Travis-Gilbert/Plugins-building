@@ -33,7 +33,14 @@ for file in "$CONTRACT" "$SKILL"; do
     '`explain`' \
     '`dynamic_call`' \
     'external_executor_required' \
-    'no MCP, GraphQL, or dynamic'; do
+    'graphLispRead' \
+    'graphLispEval' \
+    'graphLispDiff' \
+    'graphLispExplain' \
+    'graph-lisp.read' \
+    'graph-lisp.eval' \
+    'graph-lisp.diff' \
+    'graph-lisp.explain'; do
     require_text "$file" "$token"
   done
 done
@@ -50,8 +57,9 @@ for contract_token in \
   'permission_denied' \
   'fuel_exhausted' \
   'replay_bytes()' \
-  'not validated against a real GraphStore snapshot' \
-  'end-to-end MCP or'; do
+  "backend's committed graph state" \
+  'public parity fixture' \
+  'permanently read-only unseeded tenant can complete'; do
   require_text "$CONTRACT" "$contract_token"
 done
 
@@ -65,17 +73,27 @@ for surface in \
   require_text "$surface" 'external_executor_required'
 done
 
-readonly INVENTED_PATTERN='\b(graph_lisp_(read|eval|diff|explain)|graphLisp(Read|Eval|Diff|Explain)|GraphLisp(Read|Eval|Diff|Explain))\b'
+readonly INVENTED_PATTERN='\b(graph_lisp_(read|eval|diff|explain)|GraphLisp(Read|Eval|Diff|Explain))\b'
 if command -v rg >/dev/null 2>&1; then
   if rg -n "$INVENTED_PATTERN" \
     "$PLUGIN_ROOT/README.md" "$PLUGIN_ROOT/commands" "$PLUGIN_ROOT/references" "$PLUGIN_ROOT/skills" \
     --glob '!PLANNED-CAPABILITY-PLUGIN-IDEAS.md'; then
     fail 'active teaching names an invented remote Graph Lisp surface'
   fi
-elif grep -ERn '(graph_lisp_(read|eval|diff|explain)|graphLisp(Read|Eval|Diff|Explain)|GraphLisp(Read|Eval|Diff|Explain))' \
+elif grep -ERn '(graph_lisp_(read|eval|diff|explain)|GraphLisp(Read|Eval|Diff|Explain))' \
   "$PLUGIN_ROOT/README.md" "$PLUGIN_ROOT/commands" "$PLUGIN_ROOT/references" "$PLUGIN_ROOT/skills" \
   | grep -v 'PLANNED-CAPABILITY-PLUGIN-IDEAS.md'; then
   fail 'active teaching names an invented remote Graph Lisp surface'
+fi
+
+if grep -Eq 'no (MCP|GraphQL|dynamic)|has no .*remote projection|not registered in MCP' \
+  "$CONTRACT" "$SKILL"; then
+  fail 'active teaching still denies the implemented remote Graph Lisp projection'
+fi
+
+if grep -Eq 'may not discover|require native catalog discovery work|until the native catalog is materialized' \
+  "$CONTRACT" "$SKILL"; then
+  fail 'active teaching still denies write-free discovery for an unseeded read-only tenant'
 fi
 
 printf 'graph-lisp teaching surface: complete\n'

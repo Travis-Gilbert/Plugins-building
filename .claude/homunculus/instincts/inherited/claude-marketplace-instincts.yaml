@@ -1,0 +1,616 @@
+# Instincts generated from https://github.com/Travis-Gilbert/claude-marketplace
+# Generated: 2026-05-06T18:21:47.842Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: claude-marketplace-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: feat, chore, fix, docs, refactor
+
+## Evidence
+
+- 22 commits analyzed
+- Detected conventional commit pattern
+- Examples: docs(plan-pro): SDK-driven redesign design doc for v1.1.0, feat(plan-pro): scaffold Python package for v1.1.0 SDK redesign
+
+---
+id: claude-marketplace-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Commit Length
+
+## Action
+
+Write moderate-length commit messages (~60 characters)
+
+## Evidence
+
+- Average commit message length: 60 chars
+- Based on 22 commits
+
+---
+id: claude-marketplace-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Naming Files
+
+## Action
+
+Use camelCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: camelCase
+
+---
+id: claude-marketplace-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: claude-marketplace-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Export Style
+
+## Action
+
+Prefer mixed exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: mixed
+
+---
+id: claude-marketplace-test-framework
+trigger: "when writing tests"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Test Framework
+
+## Action
+
+Use jest as the test framework
+
+## Evidence
+
+- Test framework detected: jest
+- File pattern: *.test.js
+
+---
+id: claude-marketplace-test-naming
+trigger: "when creating a test file"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Test Naming
+
+## Action
+
+Name test files using the pattern: *.test.js
+
+## Evidence
+
+- File pattern: *.test.js
+- Consistent across test files
+
+---
+id: claude-marketplace-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~16x per month
+- Files: theorem-context-sdk/theorem-context-ts/src/*, **/*.test.*
+
+---
+id: claude-marketplace-workflow-add-new-agent-or-skill
+trigger: "when doing add new agent or skill"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Workflow Add New Agent Or Skill
+
+## Action
+
+Follow the add-new-agent-or-skill workflow:
+1. Create or update one or more agent markdown files in agents/.
+2. Create or update SKILL.md files in skills/.
+3. Optionally update references/ (e.g., PLUGIN_INVENTORY.md, ROUTING.md) to document or register the new agent/skill.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: */agents/*.md, */skills/*/SKILL.md, */references/*.md
+
+---
+id: claude-marketplace-workflow-scaffold-new-sdk-or-package
+trigger: "when doing scaffold new sdk or package"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Workflow Scaffold New Sdk Or Package
+
+## Action
+
+Follow the scaffold-new-sdk-or-package workflow:
+1. Add .gitignore and project config (e.g., pyproject.toml, package.json).
+2. Create source code directory and initial __init__.py or index.ts.
+3. Add test directory with at least one test file.
+4. Add README.md for documentation.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: */.gitignore, */pyproject.toml, */package.json
+
+---
+id: claude-marketplace-workflow-implement-feature-with-tests
+trigger: "when doing implement feature with tests"
+confidence: 0.7
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Workflow Implement Feature With Tests
+
+## Action
+
+Follow the implement-feature-with-tests workflow:
+1. Add or update a Python/TypeScript source file (e.g., models.py, validators.py, grounding.py, prompts.py).
+2. Add or update a corresponding test file (e.g., test_models.py, test_validators.py, test_grounding.py, test_prompts.py).
+3. Optionally add fixtures or sample data for testing.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~4x per month
+- Files: */scripts/*.py, */src/*.ts, */tests/test_*.py
+
+---
+id: claude-marketplace-workflow-refactor-remove-obsolete-agents-skills
+trigger: "when doing refactor remove obsolete agents skills"
+confidence: 0.55
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Workflow Refactor Remove Obsolete Agents Skills
+
+## Action
+
+Follow the refactor-remove-obsolete-agents-skills workflow:
+1. Delete agent markdown files from agents/.
+2. Delete SKILL.md and related files from lib/ or skills/.
+3. Remove associated scripts or knowledge files if no longer referenced.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~1x per month
+- Files: */agents/*.md, */lib/*/SKILL.md, */lib/*/scripts/*
+
+---
+id: claude-marketplace-workflow-update-sdk-or-package-structure
+trigger: "when doing update sdk or package structure"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Workflow Update Sdk Or Package Structure
+
+## Action
+
+Follow the update-sdk-or-package-structure workflow:
+1. Update README.md and config files (e.g., pyproject.toml, package.json).
+2. Rename or update source files and directories as needed.
+3. Update test files to match new structure.
+4. Update documentation (e.g., AGENTS.md) to reflect changes.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: */README.md, */pyproject.toml, */package.json
+
+---
+id: claude-marketplace-workflow-document-design-and-implementation-plan
+trigger: "when doing document design and implementation plan"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Workflow Document Design And Implementation Plan
+
+## Action
+
+Follow the document-design-and-implementation-plan workflow:
+1. Add or update a markdown file in docs/plans/ describing the design or implementation plan.
+2. Reference the design doc in related commit messages and documentation.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: */docs/plans/*.md
+
+---
+id: claude-marketplace-instinct-file-naming
+trigger: "When creating or renaming files in the codebase"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Instinct File Naming
+
+## Action
+
+Use camelCase for files, PascalCase for classes, and SCREAMING_SNAKE_CASE for constants
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions
+- Seen in src and scripts files
+
+---
+id: claude-marketplace-instinct-import-style
+trigger: "When importing modules in JavaScript/TypeScript files"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Instinct Import Style
+
+## Action
+
+Use relative import paths
+
+## Evidence
+
+- Pattern in codeStyle.importStyle
+- Pattern in src/*.ts
+
+---
+id: claude-marketplace-instinct-export-style
+trigger: "When exporting modules or functions"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Instinct Export Style
+
+## Action
+
+Use mixed export style (both default and named exports as appropriate)
+
+## Evidence
+
+- Pattern in codeStyle.exportStyle
+- Pattern in src/*.ts
+
+---
+id: claude-marketplace-instinct-test-file-pattern
+trigger: "When adding test files for JavaScript/TypeScript code"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Instinct Test File Pattern
+
+## Action
+
+Name test files with the pattern *.test.js or *.test.ts
+
+## Evidence
+
+- Pattern in testing.filePattern
+- Seen in tests/*.test.js
+
+---
+id: claude-marketplace-instinct-test-framework
+trigger: "When writing unit tests for JavaScript/TypeScript code"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Instinct Test Framework
+
+## Action
+
+Use Jest as the testing framework
+
+## Evidence
+
+- Pattern in testing.framework
+- Presence of jest config files
+
+---
+id: claude-marketplace-instinct-feature-test-coupling
+trigger: "When implementing a new feature or module"
+confidence: 0.95
+domain: testing
+source: repo-analysis
+source_repo: Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Instinct Feature Test Coupling
+
+## Action
+
+Immediately add or update corresponding test files
+
+## Evidence
+
+- Workflow: implement-feature-with-tests
+- Commit sequence: Add feature implementation, Add tests for feature
+
+---
+id: claude-marketplace-instinct-git-commit-format
+trigger: "When writing a commit message"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Instinct Git Commit Format
+
+## Action
+
+Use conventional commit prefixes (feat, fix, chore, docs, refactor) followed by scope and concise description
+
+## Evidence
+
+- Pattern in commits.prefixes
+- Examples: 'feat(plan-pro): scaffold Python package for v1.1.0 SDK redesign'
+
+---
+id: claude-marketplace-instinct-git-commit-length
+trigger: "When composing a commit message"
+confidence: 0.7
+domain: git
+source: repo-analysis
+source_repo: Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Instinct Git Commit Length
+
+## Action
+
+Keep the commit message around 60 characters on average
+
+## Evidence
+
+- Pattern in commits.averageLength
+- Examples in commit history
+
+---
+id: claude-marketplace-instinct-add-agent-skill
+trigger: "When someone wants to introduce a new agent or skill to a plugin/module"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Instinct Add Agent Skill
+
+## Action
+
+Create or update agent markdown files in agents/, SKILL.md in skills/, and optionally update references/
+
+## Evidence
+
+- Workflow: add-new-agent-or-skill
+- Files: */agents/*.md, */skills/*/SKILL.md, */references/*.md
+
+---
+id: claude-marketplace-instinct-scaffold-sdk
+trigger: "When starting a new SDK or package (Python or TypeScript)"
+confidence: 0.85
+domain: workflow
+source: repo-analysis
+source_repo: Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Instinct Scaffold Sdk
+
+## Action
+
+Add .gitignore and config, create source and test directories, and add README.md
+
+## Evidence
+
+- Workflow: scaffold-new-sdk-or-package
+- Files: */.gitignore, */pyproject.toml, */package.json, */src/*.ts, */theorem_context/*.py, */tests/*, */README.md
+
+---
+id: claude-marketplace-instinct-feature-with-tests
+trigger: "When adding a new feature or helper function"
+confidence: 0.95
+domain: workflow
+source: repo-analysis
+source_repo: Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Instinct Feature With Tests
+
+## Action
+
+Add or update source file and corresponding test file, optionally add fixtures
+
+## Evidence
+
+- Workflow: implement-feature-with-tests
+- Files: */scripts/*.py, */src/*.ts, */tests/test_*.py, */tests/*.mjs, */tests/fixtures/*
+
+---
+id: claude-marketplace-instinct-remove-obsolete-agents-skills
+trigger: "When agents or skills are no longer needed due to architectural changes"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Instinct Remove Obsolete Agents Skills
+
+## Action
+
+Delete agent markdown files, SKILL.md, related scripts, and knowledge files if unreferenced
+
+## Evidence
+
+- Workflow: refactor-remove-obsolete-agents-skills
+- Files: */agents/*.md, */lib/*/SKILL.md, */lib/*/scripts/*, */knowledge/*, */scripts/epistemic/*
+
+---
+id: claude-marketplace-instinct-sync-sdk-structure
+trigger: "When SDK/package naming or structure needs to be aligned across the codebase"
+confidence: 0.85
+domain: workflow
+source: repo-analysis
+source_repo: Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Instinct Sync Sdk Structure
+
+## Action
+
+Update README.md, config, source, test files, and documentation to match new structure
+
+## Evidence
+
+- Workflow: update-sdk-or-package-structure
+- Files: */README.md, */pyproject.toml, */package.json, */theorem_context/*, */src/*, */tests/*, AGENTS.md
+
+---
+id: claude-marketplace-instinct-add-design-doc
+trigger: "When planning or documenting a new architecture or major feature"
+confidence: 0.8
+domain: workflow
+source: repo-analysis
+source_repo: Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Instinct Add Design Doc
+
+## Action
+
+Add or update a markdown file in docs/plans/ describing the design or implementation plan
+
+## Evidence
+
+- Workflow: document-design-and-implementation-plan
+- Files: */docs/plans/*.md
+
+---
+id: claude-marketplace-instinct-error-handling
+trigger: "When handling errors in JavaScript/TypeScript code"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: Travis-Gilbert/claude-marketplace
+---
+
+# Claude Marketplace Instinct Error Handling
+
+## Action
+
+Use try-catch blocks for error handling; do not use custom error classes or global handlers
+
+## Evidence
+
+- Pattern in errorHandling.style
+- No customErrorClasses/globalHandler/errorBoundaries
+

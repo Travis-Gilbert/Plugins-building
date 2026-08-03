@@ -60,7 +60,7 @@ args=$(jq -n \
       root: $root,
       paths: $paths
     },
-    tier_bound: 0,
+    tier_bound: 1,
     fail_at_or_above: "error"
   }')
 if ! response=$(THEOREM_NATIVE_TIMEOUT_SECONDS=45 theorem_lint_json "gate" "$args"); then

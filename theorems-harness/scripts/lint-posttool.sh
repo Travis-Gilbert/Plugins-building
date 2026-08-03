@@ -10,11 +10,21 @@ theorem_require_jq || { printf '{"continue":true}\n'; exit 0; }
 
 input=$(theorem_read_stdin)
 repo_root=$(theorem_repo_root "$input")
+cwd=$(theorem_resolve_cwd "$input")
+repo_root=$(cd "$repo_root" && pwd -P)
+cwd=$(cd "$cwd" && pwd -P)
 sid=$(theorem_session_id "$input")
 session_key=$(theorem_session_key "$sid")
 state_dir="$repo_root/.theorem/lint/$session_key"
 touch_dir="$state_dir/touches"
 mkdir -p "$touch_dir"
+
+tool_name=$(printf '%s' "$input" | jq -r '
+  if (.tool | type) == "object" then (.tool.name // "")
+  elif (.tool | type) == "string" then .tool
+  else (.tool_name // .name // "")
+  end
+' 2>/dev/null || printf '')
 
 direct_paths=$(printf '%s' "$input" | jq -r '
   [
@@ -35,18 +45,36 @@ patch_text=$(printf '%s' "$input" | jq -r '
   // empty
 ' 2>/dev/null || printf '')
 patch_paths=$(printf '%s\n' "$patch_text" \
-  | sed -nE 's/^\*\*\* (Add|Update|Delete) File: (.+)$/\2/p')
+  | sed -nE \
+      -e 's/^\*\*\* (Add|Update|Delete) File: (.+)$/\2/p' \
+      -e 's/^\*\*\* Move to: (.+)$/\1/p')
+
+shell_paths=''
+case "$tool_name" in
+  Bash|exec_command|functions.exec_command)
+    shell_paths=$(
+      {
+        git -C "$repo_root" diff --name-only --no-renames -z
+        git -C "$repo_root" diff --cached --name-only --no-renames -z
+        git -C "$repo_root" ls-files --others --exclude-standard -z
+      } 2>/dev/null \
+        | tr '\0' '\n' \
+        | awk 'NF && $0 !~ /^\.theorem(\/|$)/'
+    )
+    ;;
+esac
 
 paths_json=$(
   {
     printf '%s\n' "$direct_paths"
     printf '%s\n' "$patch_paths"
-  } | awk -v root="$repo_root" '
+    printf '%s\n' "$shell_paths"
+  } | awk -v root="$repo_root" -v cwd="$cwd" '
     NF {
       if ($0 ~ /(^|\/)\.\.(\/|$)/) {
         next
       }
-      absolute = substr($0, 1, 1) == "/" ? $0 : root "/" $0
+      absolute = substr($0, 1, 1) == "/" ? $0 : cwd "/" $0
       if (index(absolute, root "/") == 1) {
         print absolute
       }

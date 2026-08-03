@@ -41,7 +41,7 @@ args=$(jq -n \
   '{
     root: $root,
     paths: [$root],
-    tier_bound: 0,
+    tier_bound: 1,
     capture_baseline: true,
     baseline_key: $baseline_key,
     materialize: true

@@ -63,7 +63,8 @@ Every success returns a `CapabilityExecution` with a typed result and
 the same receipt shape. Preserve:
 
 - receipt version and content-addressed `receipt_id`;
-- operation and caller-provided graph version;
+- operation and graph version used for execution (caller-provided for
+  crate-local calls; committed backend version for remote adapters);
 - deterministic `input_anchor` and optional `outcome_anchor`;
 - status `succeeded`, `refused`, or `failed`;
 - error code;

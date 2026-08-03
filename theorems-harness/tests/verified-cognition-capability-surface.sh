@@ -65,7 +65,8 @@ for token in \
   require_text "$CONTRACT" "$token"
 done
 
-if grep -Eq 'orchestrator(s)? remain unimplemented|orchestration module.*do(es)? not yet exist|contract checker.*do(es)? not yet exist' \
+if grep -Eiq \
+  '(orchestration|orchestrator(s)?|contract checker)[^.]*((unimplemented)|(not[[:space:]]+implemented)|((do(es)?)[[:space:]]+not[[:space:]]+(yet[[:space:]]+)?exist))' \
   "$CONTRACT" "$SKILL"; then
   fail 'active teaching still denies the implemented source orchestration contract'
 fi

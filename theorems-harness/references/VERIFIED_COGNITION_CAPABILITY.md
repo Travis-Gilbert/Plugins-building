@@ -9,16 +9,19 @@ current MCP/GraphQL projection.
 
 ## Implemented protocol boundary
 
-`rustyred-thg-mcp/src/verified_cognition.rs` validates bounded workflow ids,
-claims, anchors, obligations, and receipt steps. It separates caller proposals
-from proof-eligible evidence, requires exact witnesses where the workflow calls
-for one, preserves unresolved obligations, and builds a SHA-256-linked receipt chain.
-Finalization refuses at the first missing or unsupported obligation.
+In the upstream `Travis-Gilbert/Theorem` repository,
+`rustyredcore_THG/crates/rustyred-thg-mcp/src/verified_cognition.rs` validates
+bounded workflow ids, claims, anchors, obligations, and receipt steps. It
+separates caller proposals from proof-eligible evidence, requires exact
+witnesses where the workflow calls for one, preserves unresolved obligations,
+and builds a SHA-256-linked receipt chain. Finalization refuses at the first
+missing or unsupported obligation.
 
-`scripts/check-verified-cognition-contracts.sh` compiles that module directly
-and runs eight successful and adverse fixtures. It also checks that every named
-solver, reconstruction, verification, Graph Lisp, code, and Writing Engineering
-source is a real registered capability rather than an invented workflow tool.
+That repository's `scripts/check-verified-cognition-contracts.sh` compiles the
+module directly and runs eight successful and adverse fixtures. It also checks
+that every named solver, reconstruction, verification, Graph Lisp, code, and
+Writing Engineering source is a real registered capability rather than an
+invented workflow tool.
 
 The protocol currently accepts typed receipt metadata supplied by its Rust
 caller. It does not reload authoritative graph receipts, persist its own receipt

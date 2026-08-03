@@ -21,7 +21,7 @@ invented GraphQL or dynamic tool.
 3. For immutable source manifests and publication lineage, use GraphQL
    `dataRegistry` / `dataRegistries` / `publishDataRegistry` or flat
    `data_registry_get` / `data_registry_list` / `data_registry_publish`.
-   Publication requires admitted write authority; conflicts and unknown
+   Publication requires write authority from an admitted identity; conflicts and unknown
    obligations remain explicit rather than replacing the first manifest.
 4. For the instant KG, use the `harnessKg*` GraphQL reads or their exact
    `harness_kg_*` flat counterparts: for example, `harnessKgStatus` maps to

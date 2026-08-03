@@ -11,12 +11,18 @@ theorem_require_jq || { printf '{"continue":true}\n'; exit 0; }
 input=$(theorem_read_stdin)
 repo_root=$(theorem_repo_root "$input")
 cwd=$(theorem_resolve_cwd "$input")
-repo_root=$(cd "$repo_root" && pwd -P)
-cwd=$(cd "$cwd" && pwd -P)
+if ! repo_root=$(cd "$repo_root" 2>/dev/null && pwd -P); then
+  printf '{"continue":true}\n'
+  exit 0
+fi
+if ! cwd=$(cd "$cwd" 2>/dev/null && pwd -P); then
+  cwd="$repo_root"
+fi
 sid=$(theorem_session_id "$input")
 session_key=$(theorem_session_key "$sid")
 state_dir="$repo_root/.theorem/lint/$session_key"
 touch_dir="$state_dir/touches"
+pretool_dir="$state_dir/pretool"
 mkdir -p "$touch_dir"
 
 tool_name=$(printf '%s' "$input" | jq -r '
@@ -50,6 +56,8 @@ patch_paths=$(printf '%s\n' "$patch_text" \
       -e 's/^\*\*\* Move to: (.+)$/\1/p')
 
 shell_paths=''
+committed_paths=''
+tool_use_id=$(theorem_jq "$input" '.tool_use_id')
 case "$tool_name" in
   Bash|exec_command|functions.exec_command)
     shell_paths=$(
@@ -61,25 +69,86 @@ case "$tool_name" in
         | tr '\0' '\n' \
         | awk 'NF && $0 !~ /^\.theorem(\/|$)/'
     )
+    if [ -n "$tool_use_id" ]; then
+      pretool_key=$(printf '%s' "$tool_use_id" | shasum -a 256 | awk '{print $1}')
+      pretool_file="$pretool_dir/$pretool_key.json"
+      if [ -s "$pretool_file" ]; then
+        head_before=$(jq -r '.head_before // empty' "$pretool_file")
+        head_after=$(git -C "$repo_root" rev-parse --verify HEAD 2>/dev/null || printf '')
+        if [ -n "$head_before" ] \
+          && [ -n "$head_after" ] \
+          && [ "$head_before" != "$head_after" ] \
+          && git -C "$repo_root" rev-parse --verify "${head_before}^{commit}" >/dev/null 2>&1; then
+          committed_paths=$(git -C "$repo_root" diff --name-only --no-renames -z "$head_before" "$head_after" 2>/dev/null \
+            | tr '\0' '\n' || printf '')
+        fi
+      fi
+    fi
     ;;
 esac
 
+canonicalize_candidate() {
+  local raw="$1"
+  local base="$2"
+  local candidate probe parent leaf suffix resolved
+
+  [ -n "$raw" ] || return 0
+  case "/$raw/" in
+    *"/../"*) return 0 ;;
+  esac
+  case "$raw" in
+    /*) candidate="$raw" ;;
+    *) candidate="$base/$raw" ;;
+  esac
+
+  probe=${candidate%/}
+  suffix=''
+  while [ ! -e "$probe" ] && [ ! -L "$probe" ]; do
+    leaf=${probe##*/}
+    [ -n "$leaf" ] || return 0
+    if [ -n "$suffix" ]; then
+      suffix="$leaf/$suffix"
+    else
+      suffix="$leaf"
+    fi
+    parent=${probe%/*}
+    if [ -z "$parent" ]; then
+      parent='/'
+    elif [ "$parent" = "$probe" ]; then
+      return 0
+    fi
+    probe="$parent"
+  done
+
+  if [ -n "$suffix" ] && [ ! -d "$probe" ]; then
+    return 0
+  fi
+  resolved=$(realpath "$probe" 2>/dev/null || printf '')
+  [ -n "$resolved" ] || return 0
+  if [ -n "$suffix" ]; then
+    resolved="$resolved/$suffix"
+  fi
+  case "$resolved" in
+    "$repo_root/.theorem"|"$repo_root/.theorem/"*) return 0 ;;
+    "$repo_root/"*) printf '%s\n' "$resolved" ;;
+  esac
+}
+
 paths_json=$(
   {
-    printf '%s\n' "$direct_paths"
-    printf '%s\n' "$patch_paths"
-    printf '%s\n' "$shell_paths"
-  } | awk -v root="$repo_root" -v cwd="$cwd" '
-    NF {
-      if ($0 ~ /(^|\/)\.\.(\/|$)/) {
-        next
-      }
-      absolute = substr($0, 1, 1) == "/" ? $0 : cwd "/" $0
-      if (index(absolute, root "/") == 1) {
-        print absolute
-      }
-    }
-  ' | sort -u | jq -R . | jq -sc .
+    {
+      printf '%s\n' "$direct_paths"
+      printf '%s\n' "$patch_paths"
+    } | while IFS= read -r path; do
+      canonicalize_candidate "$path" "$cwd"
+    done
+    {
+      printf '%s\n' "$shell_paths"
+      printf '%s\n' "$committed_paths"
+    } | while IFS= read -r path; do
+      canonicalize_candidate "$path" "$repo_root"
+    done
+  } | sort -u | jq -R . | jq -sc .
 )
 
 path_count=$(printf '%s' "$paths_json" | jq 'length')
@@ -88,7 +157,6 @@ if [ "$path_count" -eq 0 ]; then
   exit 0
 fi
 
-tool_use_id=$(theorem_jq "$input" '.tool_use_id')
 touch_key=$(printf '%s\n%s' "$tool_use_id" "$paths_json" | shasum -a 256 | awk '{print $1}')
 touch_file="$touch_dir/$touch_key.json"
 if [ ! -f "$touch_file" ]; then

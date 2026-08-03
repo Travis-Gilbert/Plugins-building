@@ -142,6 +142,13 @@
           {
             "type": "command",
             "shell": "bash",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/lint-pretool.sh",
+            "timeout": 5,
+            "statusMessage": "Anchoring pre-tool lint state"
+          },
+          {
+            "type": "command",
+            "shell": "bash",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/enforce-action-rail.sh",
             "timeout": 5,
             "statusMessage": "Checking theorem action rail"

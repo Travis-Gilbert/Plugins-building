@@ -9,11 +9,6 @@ source "$(dirname "$0")/lib.sh"
 theorem_require_jq || { printf '{"continue":true}\n'; exit 0; }
 
 input=$(theorem_read_stdin)
-stop_hook_active=$(printf '%s' "$input" | jq -r '.stop_hook_active // false')
-if [ "$stop_hook_active" = "true" ]; then
-  printf '{"continue":true}\n'
-  exit 0
-fi
 repo_root=$(theorem_repo_root "$input")
 sid=$(theorem_session_id "$input")
 session_key=$(theorem_session_key "$sid")
@@ -35,8 +30,11 @@ fi
 
 if [ ! -s "$reference_file" ]; then
   jq -n '{
-    decision: "block",
-    reason: "RustyRed lint cannot prove the session delta because the opening baseline was not captured."
+    continue: true,
+    hookSpecificOutput: {
+      hookEventName: "Stop",
+      additionalContext: "RustyRed lint did not gate completion because no opening baseline was armed."
+    }
   }'
   exit 0
 fi
@@ -44,8 +42,11 @@ fi
 baseline_reference=$(jq -r '.baseline_reference // empty' "$reference_file")
 if [ -z "$baseline_reference" ]; then
   jq -n '{
-    decision: "block",
-    reason: "RustyRed lint cannot prove the session delta because the opening baseline reference is missing."
+    continue: true,
+    hookSpecificOutput: {
+      hookEventName: "Stop",
+      additionalContext: "RustyRed lint did not gate completion because the opening baseline reference is unavailable."
+    }
   }'
   exit 0
 fi

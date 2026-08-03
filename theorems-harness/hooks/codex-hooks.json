@@ -109,6 +109,17 @@
             "statusMessage": "Authorizing harness tool"
           }
         ]
+      },
+      {
+        "matcher": "Bash|exec_command|functions.exec_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash \"${PLUGIN_ROOT}/scripts/lint-pretool.sh\"",
+            "timeout": 5,
+            "statusMessage": "Anchoring pre-tool lint state"
+          }
+        ]
       }
     ],
     "PostToolUse": [

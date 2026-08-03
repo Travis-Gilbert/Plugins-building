@@ -29,11 +29,47 @@ if [ -s "$reference_file" ]; then
 fi
 
 lock_dir="$state_dir/capture.lock"
+lock_pid_file="$lock_dir/pid"
+
+cleanup_capture_lock() {
+  local owner_pid=''
+  if [ -f "$lock_pid_file" ]; then
+    owner_pid=$(cat "$lock_pid_file" 2>/dev/null || printf '')
+  fi
+  if [ "$owner_pid" = "$$" ]; then
+    rm -f "$lock_pid_file"
+    rmdir "$lock_dir" 2>/dev/null || true
+  fi
+}
+
+capture_lock_is_stale() {
+  local owner_pid=''
+  if [ -f "$lock_pid_file" ]; then
+    owner_pid=$(cat "$lock_pid_file" 2>/dev/null || printf '')
+    case "$owner_pid" in
+      ''|*[!0-9]*) return 0 ;;
+    esac
+    if kill -0 "$owner_pid" 2>/dev/null; then
+      return 1
+    fi
+    return 0
+  fi
+  find "$lock_dir" -prune -mmin +1 -print 2>/dev/null | grep -q .
+}
+
 if ! mkdir "$lock_dir" 2>/dev/null; then
-  printf '{"continue":true}\n'
-  exit 0
+  if capture_lock_is_stale; then
+    rm -f "$lock_pid_file"
+    rmdir "$lock_dir" 2>/dev/null || true
+  fi
+  if ! mkdir "$lock_dir" 2>/dev/null; then
+    printf '{"continue":true}\n'
+    exit 0
+  fi
 fi
-trap 'rmdir "$lock_dir" 2>/dev/null || true' EXIT
+printf '%s\n' "$$" > "$lock_pid_file"
+trap cleanup_capture_lock EXIT
+trap 'cleanup_capture_lock; exit 0' HUP INT TERM
 
 args=$(jq -n \
   --arg root "$repo_root" \

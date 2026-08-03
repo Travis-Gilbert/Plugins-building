@@ -15,6 +15,44 @@ session_key=$(theorem_session_key "$sid")
 state_dir="$repo_root/.theorem/lint/$session_key"
 reference_file="$state_dir/baseline-ref.json"
 touch_dir="$state_dir/touches"
+block_state_file="$state_dir/stop-block-state.json"
+stop_hook_active=$(printf '%s' "$input" | jq -r '.stop_hook_active // false')
+
+clear_block_state() {
+  rm -f "$block_state_file"
+}
+
+emit_gate_failure() {
+  local reason="$1"
+  local block_count=0
+  local next_count state_tmp
+
+  if [ -s "$block_state_file" ]; then
+    block_count=$(jq -r '.block_count // 0' "$block_state_file" 2>/dev/null || printf '0')
+    case "$block_count" in
+      ''|*[!0-9]*) block_count=0 ;;
+    esac
+  fi
+  if [ "$stop_hook_active" = "true" ] && [ "$block_count" -ge 2 ]; then
+    jq -n --arg reason "$reason" '{
+      continue: true,
+      hookSpecificOutput: {
+        hookEventName: "Stop",
+        additionalContext: ("RustyRed lint reached its bounded retry limit. The unresolved gate result remains:\n" + $reason)
+      }
+    }'
+    return
+  fi
+
+  next_count=$((block_count + 1))
+  state_tmp="$block_state_file.tmp.$$"
+  jq -n \
+    --argjson block_count "$next_count" \
+    --arg reason "$reason" \
+    '{block_count: $block_count, reason: $reason}' > "$state_tmp"
+  mv "$state_tmp" "$block_state_file"
+  jq -n --arg reason "$reason" '{decision: "block", reason: $reason}'
+}
 
 if [ ! -d "$touch_dir" ]; then
   printf '{"continue":true}\n'
@@ -65,16 +103,15 @@ args=$(jq -n \
     fail_at_or_above: "error"
   }')
 if ! response=$(THEOREM_NATIVE_TIMEOUT_SECONDS=45 theorem_lint_json "gate" "$args"); then
-  jq -n '{
-    decision: "block",
-    reason: "RustyRed lint cannot prove the session delta because the local lint MCP endpoint is unavailable."
-  }'
+  emit_gate_failure \
+    "RustyRed lint cannot prove the session delta because the local lint MCP endpoint is unavailable."
   exit 0
 fi
 
 gate=$(printf '%s' "$response" | jq -c '.operation_receipt // .gate // .')
 passed=$(printf '%s' "$gate" | jq -r '.passed // .verdict.passed // false')
 if [ "$passed" = "true" ]; then
+  clear_block_state
   printf '{"continue":true}\n'
   exit 0
 fi
@@ -89,7 +126,4 @@ reason=$(printf '%s' "$gate" | jq -r '
       )
     + "\nResolve the introduced diagnostics and try to stop again."
 ')
-jq -n --arg reason "$reason" '{
-  decision: "block",
-  reason: $reason
-}'
+emit_gate_failure "$reason"

@@ -14,6 +14,9 @@ jq -e '
     and any(.hooks[]; .command | contains("lint-posttool.sh")))
   and all(.hooks.PreToolUse[]; all(.hooks[]; (.command | contains("lint-posttool.sh")) | not))
   and any(.hooks.PreToolUse[]; any(.hooks[]; .command | contains("lint-pretool.sh")))
+  and any(.hooks.PostToolUseFailure[];
+    ((.matcher // "") | test("apply_patch"))
+    and any(.hooks[]; .command | contains("lint-posttool.sh")))
 ' "$plugin_root/hooks/hooks.json" >/dev/null
 jq -e '
   any(.hooks.PostToolUse[];
@@ -32,8 +35,12 @@ git -C "$repo" -c user.name=Test -c user.email=test@example.invalid commit -qm i
 repo=$(git -C "$repo" rev-parse --show-toplevel)
 
 export FAKE_LINT_LOG="$fixture_root/lint-calls.jsonl"
+export FAKE_CURL_ARGS_LOG="$fixture_root/curl-args.log"
 export FAKE_GATE_PASS=true
+export THEOREM_HARNESS_API_TOKEN="production-harness-secret"
+export THEOREM_LINT_API_TOKEN="local-lint-secret"
 curl() {
+  printf '%s\n' "$@" >> "$FAKE_CURL_ARGS_LOG"
   if [ "${FAKE_LINT_UNAVAILABLE:-false}" = "true" ]; then
     return 1
   fi
@@ -131,6 +138,10 @@ first_start=$(printf '%s' "$session_input" | "$plugin_root/scripts/lint-sessions
 second_start=$(printf '%s' "$session_input" | "$plugin_root/scripts/lint-sessionstart.sh")
 printf '%s' "$first_start" | jq -e '.continue == true' >/dev/null
 printf '%s' "$second_start" | jq -e '.hookSpecificOutput.additionalContext | contains("reused")' >/dev/null
+if grep -q 'production-harness-secret' "$FAKE_CURL_ARGS_LOG"; then
+  exit 1
+fi
+grep -q 'Bearer local-lint-secret' "$FAKE_CURL_ARGS_LOG"
 capture_count=$(jq -r '.params.arguments.arguments.capture_baseline // false' "$FAKE_LINT_LOG" | grep -c true)
 [ "$capture_count" -eq 1 ]
 baseline_tier=$(jq -r 'select(.params.arguments.arguments.capture_baseline == true) | .params.arguments.arguments.tier_bound' "$FAKE_LINT_LOG")
@@ -154,6 +165,15 @@ printf '%s' "$post_output" | jq -e '
 post_paths=$(jq -sc '.[-1].params.arguments.arguments.paths' "$FAKE_LINT_LOG")
 [ "$post_paths" = "[\"$repo/src/main.rs\"]" ]
 
+failed_post_input=$(printf '%s' "$post_input" | jq '
+  .hook_event_name = "PostToolUseFailure"
+  | .tool_use_id = "patch-failed"
+')
+failed_post_output=$(printf '%s' "$failed_post_input" | "$plugin_root/scripts/lint-posttool.sh")
+printf '%s' "$failed_post_output" | jq -e '
+  .continue == true and .hookSpecificOutput.hookEventName == "PostToolUseFailure"
+' >/dev/null
+
 mkdir -p "$repo/pkg/src"
 relative_input=$(jq -n --arg cwd "$repo/pkg" '{
   session_id: "lint-hook-test",
@@ -168,6 +188,23 @@ relative_input=$(jq -n --arg cwd "$repo/pkg" '{
 printf '%s' "$relative_input" | "$plugin_root/scripts/lint-posttool.sh" >/dev/null
 relative_paths=$(jq -sc '.[-1].params.arguments.arguments.paths' "$FAKE_LINT_LOG")
 [ "$relative_paths" = "[\"$repo/pkg/src/nested.rs\"]" ]
+
+parent_relative_input=$(printf '%s' "$relative_input" | jq '
+  .tool_use_id = "patch-parent-relative"
+  | .tool_input.patch = "*** Begin Patch\n*** Update File: ../src/main.rs\n@@\n-old\n+new\n*** End Patch\n"
+')
+printf '%s' "$parent_relative_input" | "$plugin_root/scripts/lint-posttool.sh" >/dev/null
+parent_relative_paths=$(jq -sc '.[-1].params.arguments.arguments.paths' "$FAKE_LINT_LOG")
+[ "$parent_relative_paths" = "[\"$repo/src/main.rs\"]" ]
+
+# shellcheck disable=SC2329 # Invoked in the child hook through export -f.
+realpath() { return 127; }
+export -f realpath
+no_realpath_input=$(printf '%s' "$parent_relative_input" | jq '.tool_use_id = "patch-no-realpath"')
+printf '%s' "$no_realpath_input" | "$plugin_root/scripts/lint-posttool.sh" >/dev/null
+no_realpath_paths=$(jq -sc '.[-1].params.arguments.arguments.paths' "$FAKE_LINT_LOG")
+[ "$no_realpath_paths" = "[\"$repo/src/main.rs\"]" ]
+unset -f realpath
 
 move_input=$(jq -n --arg cwd "$repo" '{
   session_id: "lint-hook-test",
@@ -195,6 +232,25 @@ shell_input=$(jq -n --arg cwd "$repo" '{
 printf '%s' "$shell_input" | "$plugin_root/scripts/lint-posttool.sh" >/dev/null
 shell_paths=$(jq -sc '.[-1].params.arguments.arguments.paths' "$FAKE_LINT_LOG")
 [ "$shell_paths" = "[\"$repo/src/shell.rs\"]" ]
+
+printf 'pre-existing dirty file\n' > "$repo/src/preexisting-dirty.rs"
+printf 'fn scoped() {}\n' > "$repo/src/scoped.rs"
+git -C "$repo" add src/scoped.rs
+git -C "$repo" -c user.name=Test -c user.email=test@example.invalid commit -qm 'add scoped fixture'
+scoped_pre_input=$(jq -n --arg cwd "$repo" '{
+  session_id: "lint-hook-test",
+  cwd: $cwd,
+  hook_event_name: "PreToolUse",
+  tool_name: "functions.exec_command",
+  tool_use_id: "shell-scoped",
+  tool_input: {cmd: "formatter --write src/scoped.rs"}
+}')
+printf '%s' "$scoped_pre_input" | "$plugin_root/scripts/lint-pretool.sh" >/dev/null
+printf 'fn scoped() { panic!(); }\n' > "$repo/src/scoped.rs"
+scoped_post_input=$(printf '%s' "$scoped_pre_input" | jq '.hook_event_name = "PostToolUse"')
+printf '%s' "$scoped_post_input" | "$plugin_root/scripts/lint-posttool.sh" >/dev/null
+scoped_paths=$(jq -sc '.[-1].params.arguments.arguments.paths' "$FAKE_LINT_LOG")
+[ "$scoped_paths" = "[\"$repo/src/scoped.rs\"]" ]
 
 printf 'fn nested_shell() {}\n' > "$repo/pkg/src/shell-subdir.rs"
 subdir_shell_input=$(jq -n --arg cwd "$repo/pkg" '{
@@ -296,6 +352,12 @@ printf '%s' "$active_output" | jq -e '
   .decision == "block"
   and (.reason | contains("introduced fixture diagnostic"))
 ' >/dev/null
+bounded_output=$(printf '%s' "$active_stop" | "$plugin_root/scripts/lint-stop-gate.sh")
+printf '%s' "$bounded_output" | jq -e '
+  .continue == true
+  and (.hookSpecificOutput.additionalContext | contains("bounded retry limit"))
+  and (.hookSpecificOutput.additionalContext | contains("introduced fixture diagnostic"))
+' >/dev/null
 export FAKE_GATE_PASS=true
 active_pass=$(printf '%s' "$active_stop" | "$plugin_root/scripts/lint-stop-gate.sh")
 printf '%s' "$active_pass" | jq -e '.continue == true' >/dev/null
@@ -335,5 +397,59 @@ unavailable_stop=$(printf '%s' "$missing_input" \
   | "$plugin_root/scripts/lint-stop-gate.sh")
 printf '%s' "$unavailable_stop" | jq -e '.continue == true' >/dev/null
 export FAKE_LINT_UNAVAILABLE=false
+
+armed_unavailable_input=$(printf '%s' "$session_input" | jq '.session_id = "lint-hook-armed-unavailable"')
+printf '%s' "$armed_unavailable_input" | "$plugin_root/scripts/lint-sessionstart.sh" >/dev/null
+armed_unavailable_key=$(theorem_session_key "lint-hook-armed-unavailable")
+armed_unavailable_touch_dir="$repo/.theorem/lint/$armed_unavailable_key/touches"
+mkdir -p "$armed_unavailable_touch_dir"
+printf '["%s"]\n' "$repo/src/main.rs" > "$armed_unavailable_touch_dir/touch.json"
+armed_stop_input=$(printf '%s' "$stop_input" | jq '.session_id = "lint-hook-armed-unavailable"')
+export FAKE_LINT_UNAVAILABLE=true
+armed_unavailable_block=$(printf '%s' "$armed_stop_input" | "$plugin_root/scripts/lint-stop-gate.sh")
+printf '%s' "$armed_unavailable_block" | jq -e '
+  .decision == "block" and (.reason | contains("endpoint is unavailable"))
+' >/dev/null
+armed_active_input=$(printf '%s' "$armed_stop_input" | jq '.stop_hook_active = true')
+armed_unavailable_retry=$(printf '%s' "$armed_active_input" | "$plugin_root/scripts/lint-stop-gate.sh")
+printf '%s' "$armed_unavailable_retry" | jq -e '.decision == "block"' >/dev/null
+armed_unavailable_bounded=$(printf '%s' "$armed_active_input" | "$plugin_root/scripts/lint-stop-gate.sh")
+printf '%s' "$armed_unavailable_bounded" | jq -e '
+  .continue == true and (.hookSpecificOutput.additionalContext | contains("bounded retry limit"))
+' >/dev/null
+export FAKE_LINT_UNAVAILABLE=false
+
+stale_sid="lint-hook-stale-lock"
+stale_key=$(theorem_session_key "$stale_sid")
+stale_lock_dir="$repo/.theorem/lint/$stale_key/capture.lock"
+mkdir -p "$stale_lock_dir"
+printf '99999999\n' > "$stale_lock_dir/pid"
+stale_input=$(printf '%s' "$session_input" | jq --arg sid "$stale_sid" '.session_id = $sid')
+stale_output=$(printf '%s' "$stale_input" | "$plugin_root/scripts/lint-sessionstart.sh")
+printf '%s' "$stale_output" | jq -e '
+  .continue == true and (.hookSpecificOutput.additionalContext | contains("captured the opening baseline"))
+' >/dev/null
+[ ! -d "$stale_lock_dir" ]
+
+unborn_repo="$fixture_root/unborn-repo"
+git init -q "$unborn_repo"
+unborn_repo=$(cd "$unborn_repo" && pwd -P)
+unborn_pre=$(jq -n --arg cwd "$unborn_repo" '{
+  session_id: "lint-hook-unborn",
+  cwd: $cwd,
+  hook_event_name: "PreToolUse",
+  tool_name: "functions.exec_command",
+  tool_use_id: "shell-first-commit",
+  tool_input: {cmd: "create and commit src/first.rs"}
+}')
+printf '%s' "$unborn_pre" | "$plugin_root/scripts/lint-pretool.sh" >/dev/null
+mkdir -p "$unborn_repo/src"
+printf 'fn first() {}\n' > "$unborn_repo/src/first.rs"
+git -C "$unborn_repo" add src/first.rs
+git -C "$unborn_repo" -c user.name=Test -c user.email=test@example.invalid commit -qm 'first commit'
+unborn_post=$(printf '%s' "$unborn_pre" | jq '.hook_event_name = "PostToolUse"')
+printf '%s' "$unborn_post" | "$plugin_root/scripts/lint-posttool.sh" >/dev/null
+unborn_paths=$(jq -sc '.[-1].params.arguments.arguments.paths' "$FAKE_LINT_LOG")
+[ "$unborn_paths" = "[\"$unborn_repo/src/first.rs\"]" ]
 
 printf 'lint hook lifecycle oracle passed\n'

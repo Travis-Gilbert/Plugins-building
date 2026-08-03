@@ -221,6 +221,20 @@
         ]
       }
     ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash|exec_command|functions.exec_command|apply_patch|functions.apply_patch|Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/lint-posttool.sh",
+            "timeout": 35,
+            "statusMessage": "Linting files touched before tool failure"
+          }
+        ]
+      }
+    ],
     "FileChanged": [
       {
         "hooks": [

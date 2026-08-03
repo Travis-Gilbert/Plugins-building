@@ -9,6 +9,11 @@ source "$(dirname "$0")/lib.sh"
 theorem_require_jq || { printf '{"continue":true}\n'; exit 0; }
 
 input=$(theorem_read_stdin)
+hook_event_name=$(theorem_jq "$input" '.hook_event_name')
+case "$hook_event_name" in
+  PostToolUse|PostToolUseFailure) ;;
+  *) hook_event_name='PostToolUse' ;;
+esac
 repo_root=$(theorem_repo_root "$input")
 cwd=$(theorem_resolve_cwd "$input")
 if ! repo_root=$(cd "$repo_root" 2>/dev/null && pwd -P); then
@@ -60,32 +65,91 @@ committed_paths=''
 tool_use_id=$(theorem_jq "$input" '.tool_use_id')
 case "$tool_name" in
   Bash|exec_command|functions.exec_command)
-    shell_paths=$(
-      {
-        git -C "$repo_root" diff --name-only --no-renames -z
-        git -C "$repo_root" diff --cached --name-only --no-renames -z
-        git -C "$repo_root" ls-files --others --exclude-standard -z
-      } 2>/dev/null \
-        | tr '\0' '\n' \
-        | awk 'NF && $0 !~ /^\.theorem(\/|$)/'
-    )
+    current_dirty=$(theorem_git_dirty_snapshot_json "$repo_root" 2>/dev/null || printf '[]')
     if [ -n "$tool_use_id" ]; then
       pretool_key=$(printf '%s' "$tool_use_id" | shasum -a 256 | awk '{print $1}')
       pretool_file="$pretool_dir/$pretool_key.json"
       if [ -s "$pretool_file" ]; then
         head_before=$(jq -r '.head_before // empty' "$pretool_file")
+        dirty_before=$(jq -c '.dirty_snapshot // []' "$pretool_file" 2>/dev/null || printf '[]')
+        shell_paths=$(jq -nr \
+          --argjson before "$dirty_before" \
+          --argjson current "$current_dirty" '
+            $current[] as $item
+            | select(any($before[]; .path == $item.path and .fingerprint == $item.fingerprint) | not)
+            | $item.path
+          ' 2>/dev/null || printf '')
         head_after=$(git -C "$repo_root" rev-parse --verify HEAD 2>/dev/null || printf '')
         if [ -n "$head_before" ] \
           && [ -n "$head_after" ] \
           && [ "$head_before" != "$head_after" ] \
-          && git -C "$repo_root" rev-parse --verify "${head_before}^{commit}" >/dev/null 2>&1; then
+          && git -C "$repo_root" rev-parse --verify "${head_before}^{tree}" >/dev/null 2>&1; then
           committed_paths=$(git -C "$repo_root" diff --name-only --no-renames -z "$head_before" "$head_after" 2>/dev/null \
             | tr '\0' '\n' || printf '')
         fi
+      else
+        shell_paths=$(printf '%s' "$current_dirty" | jq -r '.[].path' 2>/dev/null || printf '')
       fi
+    else
+      shell_paths=$(printf '%s' "$current_dirty" | jq -r '.[].path' 2>/dev/null || printf '')
     fi
     ;;
 esac
+
+normalize_absolute_path() {
+  local raw="$1"
+  local normalized='/'
+  local component
+  local -a components
+
+  IFS='/' read -r -a components <<< "$raw"
+  for component in "${components[@]}"; do
+    case "$component" in
+      ''|.) continue ;;
+      ..)
+        if [ "$normalized" != '/' ]; then
+          normalized=${normalized%/*}
+          [ -n "$normalized" ] || normalized='/'
+        fi
+        ;;
+      *)
+        if [ "$normalized" = '/' ]; then
+          normalized="/$component"
+        else
+          normalized="$normalized/$component"
+        fi
+        ;;
+    esac
+  done
+  printf '%s' "$normalized"
+}
+
+resolve_physical_path() {
+  local probe="$1"
+  local resolved parent leaf
+
+  if command -v realpath >/dev/null 2>&1; then
+    resolved=$(realpath "$probe" 2>/dev/null || printf '')
+    if [ -n "$resolved" ]; then
+      printf '%s' "$resolved"
+      return 0
+    fi
+  fi
+  if [ -d "$probe" ]; then
+    (cd "$probe" 2>/dev/null && pwd -P)
+    return
+  fi
+  [ -L "$probe" ] && return 1
+  parent=${probe%/*}
+  leaf=${probe##*/}
+  [ -n "$parent" ] || parent='/'
+  resolved=$(cd "$parent" 2>/dev/null && pwd -P) || return 1
+  if [ "$resolved" = '/' ]; then
+    printf '/%s' "$leaf"
+  else
+    printf '%s/%s' "$resolved" "$leaf"
+  fi
+}
 
 canonicalize_candidate() {
   local raw="$1"
@@ -93,13 +157,11 @@ canonicalize_candidate() {
   local candidate probe parent leaf suffix resolved
 
   [ -n "$raw" ] || return 0
-  case "/$raw/" in
-    *"/../"*) return 0 ;;
-  esac
   case "$raw" in
     /*) candidate="$raw" ;;
     *) candidate="$base/$raw" ;;
   esac
+  candidate=$(normalize_absolute_path "$candidate")
 
   probe=${candidate%/}
   suffix=''
@@ -123,7 +185,7 @@ canonicalize_candidate() {
   if [ -n "$suffix" ] && [ ! -d "$probe" ]; then
     return 0
   fi
-  resolved=$(realpath "$probe" 2>/dev/null || printf '')
+  resolved=$(resolve_physical_path "$probe" 2>/dev/null || printf '')
   [ -n "$resolved" ] || return 0
   if [ -n "$suffix" ]; then
     resolved="$resolved/$suffix"
@@ -175,10 +237,10 @@ args=$(jq -n \
     materialize: true
   }')
 if ! response=$(THEOREM_NATIVE_TIMEOUT_SECONDS=30 theorem_lint_json "check" "$args"); then
-  jq -n '{
+  jq -n --arg hook_event_name "$hook_event_name" '{
     continue: true,
     hookSpecificOutput: {
-      hookEventName: "PostToolUse",
+      hookEventName: $hook_event_name,
       additionalContext: "RustyRed lint could not inspect the touched files because the local lint MCP endpoint is unavailable."
     }
   }'
@@ -200,10 +262,10 @@ context=$(printf '%s' "$lint_payload" | jq -r '
     end
   | .[0:9500]
 ')
-jq -n --arg context "$context" '{
+jq -n --arg context "$context" --arg hook_event_name "$hook_event_name" '{
   continue: true,
   hookSpecificOutput: {
-    hookEventName: "PostToolUse",
+    hookEventName: $hook_event_name,
     additionalContext: $context
   }
 }'

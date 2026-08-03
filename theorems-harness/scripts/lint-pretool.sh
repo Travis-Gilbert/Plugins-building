@@ -24,8 +24,17 @@ case "$tool_name" in
 esac
 
 repo_root=$(theorem_repo_root "$input")
-repo_root=$(cd "$repo_root" && pwd -P)
-head_before=$(git -C "$repo_root" rev-parse --verify HEAD 2>/dev/null || printf '')
+if ! repo_root=$(cd "$repo_root" 2>/dev/null && pwd -P); then
+  printf '{"continue":true}\n'
+  exit 0
+fi
+if ! git -C "$repo_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  printf '{"continue":true}\n'
+  exit 0
+fi
+head_before=$(git -C "$repo_root" rev-parse --verify HEAD 2>/dev/null \
+  || theorem_git_empty_tree "$repo_root")
+dirty_snapshot=$(theorem_git_dirty_snapshot_json "$repo_root" 2>/dev/null || printf '[]')
 tool_use_id=$(theorem_jq "$input" '.tool_use_id')
 if [ -z "$head_before" ] || [ -z "$tool_use_id" ]; then
   printf '{"continue":true}\n'
@@ -42,7 +51,12 @@ pretool_tmp="$pretool_file.tmp.$$"
 jq -n \
   --arg tool_use_id "$tool_use_id" \
   --arg head_before "$head_before" \
-  '{tool_use_id: $tool_use_id, head_before: $head_before}' > "$pretool_tmp"
+  --argjson dirty_snapshot "$dirty_snapshot" \
+  '{
+    tool_use_id: $tool_use_id,
+    head_before: $head_before,
+    dirty_snapshot: $dirty_snapshot
+  }' > "$pretool_tmp"
 mv "$pretool_tmp" "$pretool_file"
 
 printf '{"continue":true}\n'

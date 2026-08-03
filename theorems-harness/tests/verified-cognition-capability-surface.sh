@@ -43,14 +43,33 @@ for file in "$CONTRACT" "$SKILL"; do
 done
 
 for token in \
-  'There is no monolithic' \
-  'There is no callable' \
-  'Voice has no current' \
-  'cognition surface' \
-  'workflow orchestrator' \
-  'adverse-fixture contract checker'; do
+  'source tree implements' \
+  'receipt-led orchestration protocol' \
+  'eight-case adverse-fixture contract checker' \
+  'not yet exposed through MCP' \
+  'does not persist' \
+  'authoritative receipt loading'; do
   require_text "$SKILL" "$token"
 done
+
+for token in \
+  'rustyred-thg-mcp/src/verified_cognition.rs' \
+  'scripts/check-verified-cognition-contracts.sh' \
+  'decision' \
+  'consistency' \
+  'reconstruction' \
+  'repair' \
+  'voice' \
+  'SHA-256-linked receipt chain' \
+  'no monolithic `verifiedCognition` tool'; do
+  require_text "$CONTRACT" "$token"
+done
+
+if grep -Eiq \
+  '(orchestration|orchestrator(s)?|contract checker)[^.]*((unimplemented)|(not[[:space:]]+implemented)|((do(es)?)[[:space:]]+not[[:space:]]+(yet[[:space:]]+)?exist))' \
+  "$CONTRACT" "$SKILL"; then
+  fail 'active teaching still denies the implemented source orchestration contract'
+fi
 
 for surface in \
   "$PLUGIN_ROOT/README.md" \

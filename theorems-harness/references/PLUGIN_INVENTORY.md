@@ -20,8 +20,8 @@ narrow entrypoints, but they are not separate products.
 | `identity-bindings` | Focused capability workflow | Resolves the admitted principal and typed binding receipt without caller-supplied identity claims | Canonical |
 | `context-management` | Focused capability workflow | Teaches scoped leases, compile/reuse, explicit invalidation, generations, dispositions, and the current hook boundary | Canonical |
 | `commitments-policy` | Focused capability workflow | Separates remote standing decisions and policy receipts from the Rust-only canonical typed claim, commitment, and constitution seams | Canonical |
-| `graph-lisp` | Focused capability workflow | Teaches crate-local bounded read/eval/diff/explain, deterministic receipts, and the absent remote projection | Canonical |
-| `data-reconstruction` | Focused capability workflow | Routes typed Data and instant-KG reads, flat-only DATAWAVE/resolve, and receipt- and obligation-preserving source reconstruction | Canonical |
+| `graph-lisp` | Focused capability workflow | Teaches admitted dynamic and GraphQL bounded read/eval/diff/explain, deterministic receipts, and the unexposed effect boundary | Canonical |
+| `data-reconstruction` | Focused capability workflow | Routes typed Data, durable source manifests, instant-KG reads, flat-only DATAWAVE/resolve, and obligation-preserving reconstruction | Canonical |
 | `learning-evolution` | Focused capability workflow | Separates callable outcome, memory, practice, and programmable-graph validation seams from Rust-only GEPA, ReasoningBank, and theorem-evolve lifecycle code | Canonical |
 | `agent-interop` | Focused capability workflow | Teaches admitted composed-agent turns, durable Head Calls, Rust-only A2A, and the server ACP WebSocket with live-provider boundaries | Canonical |
 | `coordination-operations` | Focused capability workflow | Separates rooms/records, task-reference rooms, streams, jobs, work graphs, session dispatch, and service operations | Canonical |
@@ -134,10 +134,10 @@ contracts. It keeps the canonical Rust `assert_typed_claim`, typed commitment,
 and structured constitution-refusal seams explicitly non-remote. See
 `COMMITMENTS_POLICY_CAPABILITY.md`.
 
-Graph Lisp teaching covers the crate-local `execute_capability` envelope and
-its pure bounded operations. It does not invent an MCP/GraphQL/dynamic surface;
-granted effects still refuse with `external_executor_required`. See
-`GRAPH_LISP_CAPABILITY.md`.
+Graph Lisp teaching covers the source `execute_capability` kernel plus dynamic
+`graph-lisp.read/eval/diff/explain` and typed GraphQL `graphLisp*` projections.
+Granted effects still refuse with `external_executor_required`, and
+`dynamic_call` remains unexposed. See `GRAPH_LISP_CAPABILITY.md`.
 
 Data and reconstruction teaching uses typed GraphQL `dataSchema` through
 `upsertDataView`, the exact `harnessKg*` reads, and the seven
@@ -145,7 +145,10 @@ Data and reconstruction teaching uses typed GraphQL `dataSchema` through
 projections exist. It preserves flat-only `datawave_ingest`, `resolve_ingest`,
 `resolve_entities`, `resolve_explain`, `memory_dedup_report`, `reconstruct`, and
 `reconstruct_binary`, plus source pins, receipts, unknowns, and unresolved
-obligations. See `DATA_RECONSTRUCTION_CAPABILITY.md`.
+obligations. Persistent DataRegistry teaching maps `dataRegistry`,
+`dataRegistries`, and `publishDataRegistry` to flat `data_registry_get`,
+`data_registry_list`, and `data_registry_publish`. See
+`DATA_RECONSTRUCTION_CAPABILITY.md`.
 
 Learning and evolution teaching uses canonical verification/calibration,
 ordinary memory/run outcomes, practice learning, and flat `programmable_graph`

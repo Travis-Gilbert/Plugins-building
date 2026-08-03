@@ -24,6 +24,12 @@ for file in "$CONTRACT" "$SKILL"; do
   for token in \
     'dataSchema' \
     'query_data' \
+    'dataRegistry' \
+    'data_registry_get' \
+    'dataRegistries' \
+    'data_registry_list' \
+    'publishDataRegistry' \
+    'data_registry_publish' \
     'harnessKgStatus' \
     'harness_kg_status' \
     'datawave_ingest' \
@@ -48,7 +54,6 @@ for token in \
   'memory_dedup_report' \
   'reconstruct_binary' \
   'reverseEngineerPort' \
-  'persistent declarative `DataRegistry`' \
   'GraphQL bridges for DATAWAVE and resolve' \
   'pinned end-to-end reconstruction oracle'; do
   require_text "$CONTRACT" "$token"
@@ -67,5 +72,9 @@ done
 require_text "$CONTRACT" 'There is no GraphQL or dynamic projection.'
 require_text "$CONTRACT" 'There is no `datawaveIngest` GraphQL field.'
 require_text "$CONTRACT" 'No stable dynamic reconstruction projection is taught here.'
+
+if grep -Fq -- '- a persistent declarative `DataRegistry`;' "$CONTRACT"; then
+  fail 'contract still teaches the implemented persistent DataRegistry as absent'
+fi
 
 printf 'data-reconstruction capability teaching surface: complete\n'

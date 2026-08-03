@@ -228,7 +228,10 @@ DATAWAVE, resolve, compound reconstruction, and binary reconstruction. Exact
 source pins, provenance, `unknowns`, `unresolved_obligations`, and validation
 receipts marked `not_run` must survive the workflow. See
 `references/DATA_RECONSTRUCTION_CAPABILITY.md`; neither emit nor port is a live
-or end-to-end parity oracle.
+or end-to-end parity oracle. Persistent DataRegistry operations publish and
+read immutable source manifests through GraphQL `dataRegistry`,
+`dataRegistries`, and `publishDataRegistry` or their `data_registry_*` flat
+counterparts.
 
 Stable constraint actions are dynamic affordances rather than dedicated flat
 or GraphQL tools. Discover, describe, and invoke them through the gateway, then
@@ -236,12 +239,13 @@ interpret the typed operation receipt and its proof eligibility. Exact schemas,
 budgets, refusal semantics, and current cancellation/persistence limits live in
 `references/SOLVER_CAPABILITY.md`.
 
-Verified cognition is currently composition, not a dedicated tool. Load
-`verified-cognition` and combine `constraint.check`, reconstruction stages,
-canonical verification receipts, and the Plan lifecycle while keeping proposal
-and proof separate. The verified-decision, consistency, reconstruction,
-repair, and voice orchestrators remain unimplemented. See
-`references/VERIFIED_COGNITION_CAPABILITY.md`.
+Verified cognition is not a dedicated remote tool. Its source-owned protocol
+validates decision, consistency, reconstruction, repair, and voice receipt
+chains, but MCP/GraphQL projection, authoritative receipt loading, and graph
+persistence remain open. Load `verified-cognition` and manually combine
+`constraint.check`, reconstruction stages, canonical verification receipts,
+Writing Engineering, Graph Lisp, and the Plan lifecycle while keeping proposal
+and proof separate. See `references/VERIFIED_COGNITION_CAPABILITY.md`.
 
 Learning and evolution reuse canonical outcome, memory, run, and practice
 evidence. Load `learning-evolution`; the callable flat evolve seam is proposal
@@ -280,12 +284,13 @@ for installed exports, but the publish/promote/inspect/selected-invoke/rollback
 lifecycle has no MCP or GraphQL projection yet. See
 `references/PROGRAMMABLE_WASM_CAPABILITY.md`.
 
-Graph Lisp pure read/eval/diff/explain is currently the crate-local
-`rustyred_thg_graph_lisp::execute_capability` envelope. It has no MCP, GraphQL,
-or dynamic gateway projection, and `dynamic_call` refuses with
-`external_executor_required` even when granted. Exact limits, receipt fields,
-typed errors, graph-version limits, and replay guarantees live in
-`references/GRAPH_LISP_CAPABILITY.md`.
+Graph Lisp pure read/eval/diff/explain shares the
+`rustyred_thg_graph_lisp::execute_capability` kernel across typed GraphQL
+`graphLisp*` queries and dynamic `graph-lisp.*` affordances. Admitted identity
+and committed graph version replace caller claims. `dynamic_call` remains
+unexposed and refuses with `external_executor_required` in the kernel. Exact
+limits, receipt fields, typed errors, graph-version rules, and replay guarantees
+live in `references/GRAPH_LISP_CAPABILITY.md`.
 
 The ambient practice graph is selected through Ensemble and compounds through
 the ordinary run/event/episode path. It does not add a second workflow engine

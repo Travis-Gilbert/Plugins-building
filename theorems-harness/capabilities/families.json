@@ -5,6 +5,10 @@
     "dynamic": [
       "constraint.check",
       "constraint.optimize",
+      "graph-lisp.diff",
+      "graph-lisp.eval",
+      "graph-lisp.explain",
+      "graph-lisp.read",
       "wasm_plugin:<plugin_id>.<export>"
     ],
     "http": [
@@ -216,10 +220,16 @@
       "reference": "DATA_RECONSTRUCTION_CAPABILITY.md",
       "summary": "Data, instant KG, resolution, DATAWAVE, and staged reconstruction preserve provenance and unresolved obligations.",
       "entries": [
+        {"surface": "graphql", "name": "Query.dataRegistry", "guidance": "read one immutable source manifest and its publication lineage", "maturity": "stable", "live_status": "source-advertised; live-unverified", "schema": "graphql_introspect:Query.dataRegistry"},
+        {"surface": "graphql", "name": "Query.dataRegistries", "guidance": "bounded typed source-registry listing", "maturity": "stable", "live_status": "source-advertised; live-unverified", "schema": "graphql_introspect:Query.dataRegistries"},
+        {"surface": "graphql", "name": "Mutation.publishDataRegistry", "guidance": "publish an admitted immutable source manifest", "maturity": "stable", "live_status": "source-advertised; live-unverified", "schema": "graphql_introspect:Mutation.publishDataRegistry"},
         {"surface": "graphql", "name": "Query.dataQuery", "guidance": "preferred typed Data query", "maturity": "stable", "live_status": "source-advertised; live-unverified", "schema": "graphql_introspect:Query.dataQuery"},
         {"surface": "graphql", "name": "Query.harnessKgSearch", "guidance": "preferred typed instant-KG search", "maturity": "stable", "live_status": "source-advertised; live-unverified", "schema": "graphql_introspect:Query.harnessKgSearch"},
         {"surface": "graphql", "name": "Mutation.reverseEngineerCompose", "guidance": "typed staged reconstruction", "maturity": "beta", "live_status": "source-advertised; live-unverified", "schema": "graphql_introspect:Mutation.reverseEngineerCompose"},
         {"surface": "flat_mcp", "name": "query_data", "guidance": "flat Data compatibility", "maturity": "stable", "live_status": "source-advertised; live-unverified", "schema": "tools/list:query_data"},
+        {"surface": "flat_mcp", "name": "data_registry_get", "guidance": "read one immutable source manifest and publication receipt", "maturity": "stable", "live_status": "source-advertised; live-unverified", "schema": "tools/list:data_registry_get"},
+        {"surface": "flat_mcp", "name": "data_registry_list", "guidance": "bounded source-registry listing", "maturity": "stable", "live_status": "source-advertised; live-unverified", "schema": "tools/list:data_registry_list"},
+        {"surface": "flat_mcp", "name": "data_registry_publish", "guidance": "publish an admitted immutable source manifest", "maturity": "stable", "live_status": "source-advertised; live-unverified", "schema": "tools/list:data_registry_publish"},
         {"surface": "flat_mcp", "name": "resolve_ingest", "guidance": "flat-only entity resolution", "maturity": "stable", "live_status": "source-advertised; live-unverified", "schema": "tools/list:resolve_ingest"},
         {"surface": "flat_mcp", "name": "datawave_ingest", "guidance": "flat-only DATAWAVE ingestion", "maturity": "beta", "live_status": "source-advertised; live-unverified", "schema": "tools/list:datawave_ingest"},
         {"surface": "flat_mcp", "name": "reconstruct_binary", "guidance": "flat-only binary reconstruction", "maturity": "beta", "live_status": "source-advertised; live-unverified", "schema": "tools/list:reconstruct_binary"}
@@ -286,9 +296,17 @@
       "title": "Graph Lisp",
       "skill": "graph-lisp",
       "reference": "GRAPH_LISP_CAPABILITY.md",
-      "summary": "Bounded pure Graph Lisp execution is source-present but has no current MCP, GraphQL, or dynamic projection.",
+      "summary": "Bounded pure Graph Lisp read, eval, diff, and explain share admitted dynamic and GraphQL projections with deterministic receipts.",
       "entries": [
-        {"surface": "rust", "name": "rustyred_thg_graph_lisp::execute_capability", "guidance": "repository-only execution seam", "maturity": "source-only", "live_status": "unmounted", "schema": "rustyred-thg-graph-lisp"}
+        {"surface": "graphql", "name": "Query.graphLispRead", "guidance": "typed bounded pure reader", "maturity": "stable", "live_status": "source-advertised; live-unverified", "schema": "graphql_introspect:Query.graphLispRead"},
+        {"surface": "graphql", "name": "Query.graphLispEval", "guidance": "typed fuel-bounded pure evaluation", "maturity": "stable", "live_status": "source-advertised; live-unverified", "schema": "graphql_introspect:Query.graphLispEval"},
+        {"surface": "graphql", "name": "Query.graphLispDiff", "guidance": "typed addressed expression diff", "maturity": "stable", "live_status": "source-advertised; live-unverified", "schema": "graphql_introspect:Query.graphLispDiff"},
+        {"surface": "graphql", "name": "Query.graphLispExplain", "guidance": "typed pure expression explanation", "maturity": "stable", "live_status": "source-advertised; live-unverified", "schema": "graphql_introspect:Query.graphLispExplain"},
+        {"surface": "dynamic", "name": "graph-lisp.read", "guidance": "discover and invoke the bounded pure reader", "maturity": "stable dynamic", "live_status": "registry-declared; live-unverified", "schema": "describe:graph-lisp.read"},
+        {"surface": "dynamic", "name": "graph-lisp.eval", "guidance": "discover and invoke fuel-bounded pure evaluation", "maturity": "stable dynamic", "live_status": "registry-declared; live-unverified", "schema": "describe:graph-lisp.eval"},
+        {"surface": "dynamic", "name": "graph-lisp.diff", "guidance": "discover and invoke addressed expression diff", "maturity": "stable dynamic", "live_status": "registry-declared; live-unverified", "schema": "describe:graph-lisp.diff"},
+        {"surface": "dynamic", "name": "graph-lisp.explain", "guidance": "discover and invoke pure expression explanation", "maturity": "stable dynamic", "live_status": "registry-declared; live-unverified", "schema": "describe:graph-lisp.explain"},
+        {"surface": "rust", "name": "rustyred_thg_graph_lisp::execute_capability", "guidance": "source-owned pure execution kernel", "maturity": "stable source", "live_status": "projected through dynamic and GraphQL adapters", "schema": "rustyred-thg-graph-lisp"}
       ]
     },
     {
@@ -411,9 +429,9 @@
       "title": "Verified cognition",
       "skill": "verified-cognition",
       "reference": "VERIFIED_COGNITION_CAPABILITY.md",
-      "summary": "Verified decision, consistency, reconstruction, and repair are explicit compositions of real surfaces, not a workflow tool.",
+      "summary": "A source-owned verified-cognition protocol validates replayable receipt chains; agents still compose real surfaces because no remote workflow projection exists.",
       "entries": [
-        {"surface": "behavior", "name": "verified cognition composition", "guidance": "compose solver, reconstruction, verification, and Plan evidence", "maturity": "composition only", "live_status": "no dedicated orchestrator", "schema": "references/VERIFIED_COGNITION_CAPABILITY.md"}
+        {"surface": "behavior", "name": "verified cognition composition", "guidance": "compose solver, reconstruction, verification, writing, Graph Lisp, and Plan receipts through the source-owned protocol", "maturity": "source contract", "live_status": "implemented protocol; no MCP/GraphQL projection or graph persistence", "schema": "rustyred-thg-mcp/src/verified_cognition.rs"}
       ]
     }
   ]

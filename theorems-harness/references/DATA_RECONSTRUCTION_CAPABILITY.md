@@ -28,9 +28,29 @@ flat query is refused unless it includes an id, collection, label, filters, or
 `broad_scan: true`.
 
 The Data API is an envelope over graph-backed records and saved views. It is
-not the planned persistent declarative `DataRegistry`. Flat-only companion
+not the persistent declarative `DataRegistry`. Flat-only companion
 packets such as `retrieve_memory`, `turn_start`, and `evidence_bundle` keep
 their separate memory/work-queue semantics.
+
+## Persistent DataRegistry
+
+The DataRegistry durably publishes immutable, content-addressed source
+manifests and their admission receipts. It is distinct from the flexible Data
+API above.
+
+| Purpose | GraphQL | Flat operation |
+|---|---|---|
+| Read one registered source | `dataRegistry` | `data_registry_get` |
+| List registered sources | `dataRegistries` | `data_registry_list` |
+| Publish a source manifest | `publishDataRegistry` | `data_registry_publish` |
+
+A source manifest binds source id/kind, pinned locator, content anchor, schema
+version, collections, metadata, and explicit obligations. Publication derives
+tenant, actor, and binding from admitted identity and atomically stores the
+manifest, registry entry, graph edges, and publication receipt. Repeating the
+same manifest is idempotent. A different immutable manifest for the same source
+creates a visible conflict and leaves the original registered manifest intact.
+Reads are bounded, and `unknown` obligations remain first-class.
 
 ## Instant KG
 
@@ -150,9 +170,7 @@ capability.
 
 The following remain substrate work, not plugin aliases:
 
-- a persistent declarative `DataRegistry`;
 - GraphQL bridges for DATAWAVE and resolve;
-- immutable source-manifest lineage;
 - real structural and semantic parity checks;
 - a pinned end-to-end reconstruction oracle;
 - a stable dynamic reconstruction capability.

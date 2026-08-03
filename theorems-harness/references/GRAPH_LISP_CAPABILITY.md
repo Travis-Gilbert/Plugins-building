@@ -1,13 +1,22 @@
 # Graph Lisp Agent Capability
 
-Graph Lisp currently exposes a bounded, deterministic, pure capability
-envelope as the Rust API
-`rustyred_thg_graph_lisp::execute_capability`. It is not registered in MCP,
-GraphQL, or the dynamic capability gateway. Agents may reason about, test, or
-integrate the Rust envelope in repository work, but a remote Harness session
-cannot invoke it today.
+Graph Lisp exposes one bounded, deterministic, pure capability through a Rust
+kernel plus matching dynamic and GraphQL adapters. The adapters share the
+kernel's result and receipt semantics; they do not create a second evaluator.
 
-There is no MCP, GraphQL, or dynamic gateway projection today.
+## Agent-callable projections
+
+| Operation | GraphQL | Dynamic affordance |
+|---|---|---|
+| Read | `graphLispRead` | `graph-lisp.read` |
+| Evaluate | `graphLispEval` | `graph-lisp.eval` |
+| Diff | `graphLispDiff` | `graph-lisp.diff` |
+| Explain | `graphLispExplain` | `graph-lisp.explain` |
+
+Use `tool_search` -> `describe` -> `invoke` for the dynamic projection. The
+Graph Lisp connector advertises only these four operations and a read-only
+writeback policy. GraphQL returns typed values, failures, identity binding,
+graph version, and the same content-addressed receipt fields.
 
 ## Rust capability surface
 
@@ -40,8 +49,12 @@ spine.
 only that an external effectful executor may receive the request; the pure
 crate still refuses to perform the effect.
 
-The caller must provide a nonblank `graph_version`. Today that value is bound
-into the receipt but is not validated against a real GraphStore snapshot.
+The crate-local API requires a nonblank caller-provided `graph_version` and
+binds it into the receipt. The remote adapters instead derive the version from
+the backend's committed graph state and overwrite identity with the admitted
+principal, actor, and binding. The strict-AOF multi-writer oracle proves that
+remote receipts anchor to committed versions, survive reopen, replay
+byte-stably at a historical anchor, and refuse stale version assumptions.
 
 ## Receipts and refusals
 
@@ -50,7 +63,8 @@ Every success returns a `CapabilityExecution` with a typed result and
 the same receipt shape. Preserve:
 
 - receipt version and content-addressed `receipt_id`;
-- operation and caller-provided graph version;
+- operation and graph version used for execution (caller-provided for
+  crate-local calls; committed backend version for remote adapters);
 - deterministic `input_anchor` and optional `outcome_anchor`;
 - status `succeeded`, `refused`, or `failed`;
 - error code;
@@ -66,11 +80,13 @@ failure.
 
 Focused crate tests prove direct read/eval/diff/explain parity, typed values,
 bounded fuel and input refusals, permission refusal, effect isolation, and
-byte-stable replay. They do not prove an agent-callable remote surface, admitted
-identity policy, real-store graph-version validation, or an end-to-end MCP or
-GraphQL oracle.
+byte-stable replay. The public parity fixture proves dynamic/GraphQL receipt
+identity and deterministic refusal, and the durable oracle proves committed
+graph-version anchoring.
 
-Do not invent a remote action. Until an actual projection lands, report Graph
-Lisp as a crate-local capability and route effectful work through separately
-registered, permissioned capabilities only when those capabilities themselves
-are advertised.
+Native discovery synthesizes the four Graph Lisp affordances without mutating
+the graph, so a permanently read-only unseeded tenant can complete
+`tool_search` -> `describe` -> pure `invoke`. The focused public oracle proves
+that path alongside the persisted-catalog path. Do not invent flat
+`graph_lisp_*` tools, and route effectful work only through separately
+registered, permissioned capabilities; `dynamic_call` remains unexposed.

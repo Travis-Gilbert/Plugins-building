@@ -1,6 +1,6 @@
 ---
 name: verified-cognition
-description: "Use when a decision, consistency check, reconstruction, or repair must separate proposals from proof by composing only real solver, verification, reconstruction, and Plan surfaces; also use to identify the absent verified-cognition and voice workflow boundaries."
+description: "Use when a decision, consistency check, reconstruction, repair, or voice workflow must separate proposals from proof using real receipts and the source-owned verified-cognition protocol, while respecting its current unprojected boundary."
 ---
 
 # Verified cognition
@@ -10,8 +10,11 @@ Generated surface map: [capability catalog](./CAPABILITIES.generated.md).
 Read `../../references/VERIFIED_COGNITION_CAPABILITY.md` plus the capability
 guide for every primitive you use.
 
-There is no monolithic verified-cognition workflow. Compose only advertised
-surfaces:
+The source tree implements a bounded receipt-led orchestration protocol for
+decision, consistency, reconstruction, repair, and voice workflows, plus an
+eight-case adverse-fixture contract checker. It is not yet exposed through MCP
+or GraphQL and does not persist its workflow chain in the graph. In an agent
+session, compose only advertised surfaces:
 
 1. Anchor the claim, inputs, graph version, repository revision, and source SHA
    that matter.
@@ -32,7 +35,7 @@ surfaces:
 Do not route to invented verified-decision, consistency, reconstruction,
 repair, voice, rewrite-pack, conflict-witness, or parity workflow tools. Repair
 uses the ordinary bounded edit-and-oracle loop. Voice has no current verified
-cognition surface. There is no callable orchestration shortcut for these
-compositions. A replayable chain can be assembled from real receipts, but
-the planned HCM-016 workflow orchestrator and adverse-fixture contract checker
-do not yet exist.
+cognition transport. There is no callable orchestration shortcut for these
+compositions. The repository protocol can validate replayable chains and fail
+at the first unmet obligation, but it is source-only until MCP/GraphQL
+projection, authoritative receipt loading, and graph persistence land.

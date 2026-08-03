@@ -42,20 +42,23 @@ is Rust `assert_typed_claim`, typed commitment lifecycle, and
 `COMMITMENTS_POLICY_CAPABILITY.md` and never report a coordination record as a
 canonical typed assertion receipt.
 
-Graph Lisp routes to `graph-lisp` only for repository implementation, tests, or
-contract reasoning. The current capability is
-`rustyred_thg_graph_lisp::execute_capability`; it has no agent-callable remote
-projection, and effect requests refuse with `external_executor_required`. See
-`GRAPH_LISP_CAPABILITY.md` rather than inventing an MCP, GraphQL, or dynamic
-action.
+Graph Lisp routes to `graph-lisp`. Prefer typed GraphQL `graphLisp*` queries or
+discover the exact `graph-lisp.read/eval/diff/explain` affordances through the
+dynamic gateway. The source kernel is
+`rustyred_thg_graph_lisp::execute_capability`; effect requests refuse with
+`external_executor_required` and `dynamic_call` is not remotely projected. See
+`GRAPH_LISP_CAPABILITY.md` for schemas, limits, receipts, and write-free native
+discovery for read-only unseeded tenants.
 
 Data, instant-KG, DATAWAVE, resolve, or source-port work routes to
 `data-reconstruction`. Prefer typed Data, `harnessKg*`, and
 `reverseEngineerCompose` through `reverseEngineerPort` GraphQL fields where
-they exist. Use `resolve_ingest`, `resolve_entities`, `resolve_explain`,
-`datawave_ingest`, `reconstruct`, and `reconstruct_binary` only as their real
-flat-only tools. Follow `DATA_RECONSTRUCTION_CAPABILITY.md`; preserve explicit
-source SHAs, receipts, unknowns, `unresolved_obligations`, and validate-stage
+they exist. Use `dataRegistry` / `dataRegistries` / `publishDataRegistry` for
+immutable source-manifest lineage. Use `resolve_ingest`, `resolve_entities`,
+`resolve_explain`, `datawave_ingest`, `reconstruct`, and `reconstruct_binary`
+only as their real flat-only tools. Follow
+`DATA_RECONSTRUCTION_CAPABILITY.md`; preserve explicit source SHAs, receipts,
+unknowns, `unresolved_obligations`, and validate-stage
 `not_run` rather than claiming end-to-end parity.
 
 Learning, GEPA, ReasoningBank, or evolution work routes to
@@ -95,12 +98,13 @@ Constraint solving is a focused dynamic capability. Load `solvers`, then use
 as proof; provider availability, bounds, cancellation, and proof eligibility
 are receipt facts.
 
-Verified decision, consistency, reconstruction, or repair requests route to
-`verified-cognition` only as a composition guide. Use real
-`constraint.check`, reconstruction, verification, and Plan surfaces; there is
-no verified-cognition or voice workflow orchestrator. Follow
-`VERIFIED_COGNITION_CAPABILITY.md` and keep proposals, `not_run` receipts,
-unresolved obligations, and proof separate.
+Verified decision, consistency, reconstruction, repair, or voice requests route
+to `verified-cognition`. A source-owned protocol validates replayable receipt
+chains, but it has no MCP/GraphQL projection or graph persistence. Agent
+sessions therefore compose real `constraint.check`, reconstruction,
+verification, Writing Engineering, Graph Lisp, and Plan surfaces manually.
+Follow `VERIFIED_COGNITION_CAPABILITY.md` and keep proposals, `not_run`
+receipts, unresolved obligations, and proof separate.
 
 Programmable WASM has no remotely callable lifecycle yet. Load
 `programmable-wasm` for installed app exports shaped
